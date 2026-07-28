@@ -226,13 +226,13 @@ st.markdown("""
     }
 
     /* ====================================================
-       100X BETTER CUSTOM TABLE STYLING
+       CUSTOM TABLE STYLING (100X UI FIX)
        ==================================================== */
     .custom-table-container {
         border-radius: 18px;
         overflow: hidden;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        background: rgba(15, 23, 42, 0.55);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(15, 23, 42, 0.65);
         backdrop-filter: blur(16px);
         box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
         margin-top: 10px;
@@ -244,8 +244,8 @@ st.markdown("""
         color: #F8FAFC;
     }
     .custom-table thead tr {
-        background: linear-gradient(135deg, rgba(99, 102, 241, 0.25) 0%, rgba(139, 92, 246, 0.15) 100%);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.3) 0%, rgba(139, 92, 246, 0.2) 100%);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.15);
     }
     .custom-table th {
         padding: 16px 20px;
@@ -258,15 +258,14 @@ st.markdown("""
     .custom-table td {
         padding: 16px 20px;
         font-size: 0.93rem;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
         vertical-align: middle;
     }
     .custom-table tbody tr {
         transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .custom-table tbody tr:hover {
-        background: rgba(99, 102, 241, 0.15);
-        transform: scale(1.002);
+        background: rgba(99, 102, 241, 0.18);
     }
     
     /* Table Badges */
@@ -281,19 +280,19 @@ st.markdown("""
         letter-spacing: 0.2px;
     }
     .badge-red {
-        background: rgba(248, 113, 113, 0.18);
+        background: rgba(248, 113, 113, 0.2);
         color: #F87171;
-        border: 1px solid rgba(248, 113, 113, 0.35);
+        border: 1px solid rgba(248, 113, 113, 0.4);
     }
     .badge-green {
-        background: rgba(52, 211, 153, 0.18);
+        background: rgba(52, 211, 153, 0.2);
         color: #34D399;
-        border: 1px solid rgba(52, 211, 153, 0.35);
+        border: 1px solid rgba(52, 211, 153, 0.4);
     }
     .badge-gray {
-        background: rgba(148, 163, 184, 0.15);
+        background: rgba(148, 163, 184, 0.18);
         color: #94A3B8;
-        border: 1px solid rgba(148, 163, 184, 0.25);
+        border: 1px solid rgba(148, 163, 184, 0.3);
     }
     .cat-title {
         display: flex;
@@ -306,8 +305,8 @@ st.markdown("""
         width: 34px;
         height: 34px;
         border-radius: 10px;
-        background: rgba(99, 102, 241, 0.2);
-        border: 1px solid rgba(99, 102, 241, 0.3);
+        background: rgba(99, 102, 241, 0.25);
+        border: 1px solid rgba(99, 102, 241, 0.35);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -897,7 +896,7 @@ with tab_history:
 
     st.divider()
     
-    # --- BIỂU ĐỒ XU HƯỚNG TỔNG TÀI CHÍNH VỚI DỰ BẢO HOVER UNIFIED ---
+    # --- BIỂU ĐỒ XU HƯỚNG TỔNG TÀI CHÍNH VỚI HOVER UNIFIED & SPIKELINES ---
     st.markdown("##### 📈 Biến động Thu nhập - Chi tiêu - Số dư qua thời gian")
     st.caption("💡 *Di chuột lên bất kỳ mốc thời gian nào để xem bảng tổng hợp thông tin chi tiết tại điểm đó.*")
     
@@ -953,7 +952,7 @@ with tab_history:
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
         font=dict(color='#F8FAFC', family="Plus Jakarta Sans", size=12),
-        hovermode="x unified",  # Tạo Bảng Thông Tin Tự Động khi Hover bất kỳ điểm nào trên trục X
+        hovermode="x unified",
         hoverlabel=dict(
             bgcolor="rgba(15, 23, 42, 0.95)",
             bordercolor="rgba(99, 102, 241, 0.6)",
@@ -964,7 +963,7 @@ with tab_history:
         xaxis=dict(
             gridcolor='rgba(255,255,255,0.05)', 
             type='category',
-            showspikes=True,      # Hiển thị đường dóng dọc khi hover
+            showspikes=True,
             spikecolor="rgba(129, 140, 248, 0.6)",
             spikethickness=1.5,
             spikedash="dot",
@@ -973,7 +972,7 @@ with tab_history:
         yaxis=dict(
             gridcolor='rgba(255,255,255,0.08)', 
             title="VNĐ",
-            showspikes=True,      # Hiển thị đường dóng ngang khi hover
+            showspikes=True,
             spikecolor="rgba(129, 140, 248, 0.6)",
             spikethickness=1.5,
             spikedash="dot"
@@ -986,7 +985,7 @@ with tab_history:
 
     st.divider()
 
-    # --- BẢNG BÁO CÁO TÙY CHỈNH NÂNG CẤP (UI 100X) ---
+    # --- BẢNG BÁO CÁO GLASSMORPHISM UI HOÀN CHỈNH ---
     col_tbl_title, col_tbl_select = st.columns([2, 1])
     with col_tbl_title:
         st.markdown(f"##### 📊 Bảng so sánh chi tiêu chi tiết ({current_month_str} vs {st.session_state.comp_month_selected})")
@@ -1014,22 +1013,20 @@ with tab_history:
             "Khác": "📦"
         }
 
-        # Xây dựng Bảng HTML UI cao cấp
-        html_table = f"""
-        <div class="custom-table-container">
-            <table class="custom-table">
-                <thead>
-                    <tr>
-                        <th>Danh mục chi tiêu</th>
-                        <th style="text-align: right;">Tháng trước ({tbl_comp_month})</th>
-                        <th style="text-align: right;">Tháng này ({current_month_str})</th>
-                        <th style="text-align: right;">Chênh lệch (VNĐ)</th>
-                        <th style="text-align: center;">Phần trăm</th>
-                        <th style="text-align: center;">Đánh giá</th>
-                    </tr>
-                </thead>
-                <tbody>
-        """
+        # Xây dựng Bảng HTML UI cao cấp không chứa thụt lề đầu dòng thừa
+        html_table = f"""<div class="custom-table-container">
+<table class="custom-table">
+<thead>
+<tr>
+<th>Danh mục chi tiêu</th>
+<th style="text-align: right;">Tháng trước ({tbl_comp_month})</th>
+<th style="text-align: right;">Tháng này ({current_month_str})</th>
+<th style="text-align: right;">Chênh lệch (VNĐ)</th>
+<th style="text-align: center;">Phần trăm</th>
+<th style="text-align: center;">Đánh giá</th>
+</tr>
+</thead>
+<tbody>"""
 
         for cat in st.session_state.fixed_expenses.keys():
             val_cur = cur_data["expenses"].get(cat, 0.0)
@@ -1054,27 +1051,23 @@ with tab_history:
                 badge_class = "badge-gray"
                 status_str = "⚪ Ổn định"
 
-            html_table += f"""
-                <tr>
-                    <td>
-                        <div class="cat-title">
-                            <div class="cat-icon">{icon}</div>
-                            <span>{cat}</span>
-                        </div>
-                    </td>
-                    <td style="text-align: right; font-weight: 600; color: #94A3B8;">{val_prev:,.0f} VNĐ</td>
-                    <td style="text-align: right; font-weight: 700; color: #F8FAFC;">{val_cur:,.0f} VNĐ</td>
-                    <td style="text-align: right;"><span class="badge-pill {badge_class}">{diff_str}</span></td>
-                    <td style="text-align: center;"><span class="badge-pill {badge_class}">{pct_str}</span></td>
-                    <td style="text-align: center; font-weight: 600; font-size: 0.85rem; color: #CBD5E1;">{status_str}</td>
-                </tr>
-            """
+            html_table += f"""<tr>
+<td>
+<div class="cat-title">
+<div class="cat-icon">{icon}</div>
+<span>{cat}</span>
+</div>
+</td>
+<td style="text-align: right; font-weight: 600; color: #94A3B8;">{val_prev:,.0f} VNĐ</td>
+<td style="text-align: right; font-weight: 700; color: #F8FAFC;">{val_cur:,.0f} VNĐ</td>
+<td style="text-align: right;"><span class="badge-pill {badge_class}">{diff_str}</span></td>
+<td style="text-align: center;"><span class="badge-pill {badge_class}">{pct_str}</span></td>
+<td style="text-align: center; font-weight: 600; font-size: 0.85rem; color: #CBD5E1;">{status_str}</td>
+</tr>"""
 
-        html_table += """
-                </tbody>
-            </table>
-        </div>
-        """
+        html_table += """</tbody>
+</table>
+</div>"""
 
         st.markdown(html_table, unsafe_allow_html=True)
 
