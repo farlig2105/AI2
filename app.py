@@ -4,7 +4,9 @@ import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
 
-# 1. Cấu hình trang
+# ----------------------------------------------------
+# 1. CẤU HÌNH TRANG & DANH MỤC BIỂU TƯỢNG
+# ----------------------------------------------------
 st.set_page_config(
     page_title="FinFlow - Quản Lý Tài Chính Cá Nhân",
     layout="wide",
@@ -12,9 +14,6 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# ----------------------------------------------------
-# KHỞI TẠO DỮ LIỆU & BỘ HÀM XỬ LÝ DÙNG CHUNG (GLOBAL)
-# ----------------------------------------------------
 CAT_ICONS = {
     "Tiền nhà": "🏠",
     "Thực phẩm": "🍲",
@@ -24,8 +23,11 @@ CAT_ICONS = {
     "Khác": "📦"
 }
 
+# ----------------------------------------------------
+# 2. BỘ HÀM XỬ LÝ DÙNG CHUNG (GLOBAL UTILS & CALLBACKS)
+# ----------------------------------------------------
 def parse_amount(val) -> float:
-    """Chuyển đổi chuỗi nhập liệu hoặc số thành số thực"""
+    """Chuyển đổi chuỗi nhập liệu hoặc số thành số thực an toàn"""
     if isinstance(val, (int, float)):
         return float(val)
     cleaned = "".join(c for c in str(val) if c.isdigit())
@@ -78,7 +80,9 @@ def add_expense_callback():
         st.session_state.inp_log_amt = "0"
         st.session_state.inp_log_note = ""
 
-# 2. Tiêm CSS Tùy Biến (Styling Modern Dark & Enhanced Readable Typography)
+# ----------------------------------------------------
+# 3. TIÊM CSS TÙY BIẾN (MODERN DARK & GLASSMORPHISM)
+# ----------------------------------------------------
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
@@ -92,7 +96,7 @@ st.markdown("""
         color: #F8FAFC;
     }
 
-    /* Streamlit Dataframe Custom Styling */
+    /* Dataframe Styling */
     div[data-testid="stDataFrame"] {
         background: rgba(15, 23, 42, 0.65) !important;
         border: 1px solid rgba(255, 255, 255, 0.12) !important;
@@ -102,7 +106,7 @@ st.markdown("""
         box-shadow: 0 20px 30px rgba(0, 0, 0, 0.35) !important;
     }
 
-    /* Plotly Glow & Hover */
+    /* Plotly Glow Effects */
     .js-plotly-plot .plotly .slice path, .js-plotly-plot .plotly .bars path {
         transition: filter 0.3s ease, opacity 0.3s ease !important;
     }
@@ -125,7 +129,7 @@ st.markdown("""
         box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8) !important;
     }
 
-    /* Headers & Cards */
+    /* Headers & Metric Cards */
     .dash-header {
         background: linear-gradient(135deg, #818CF8 0%, #C084FC 50%, #34D399 100%);
         -webkit-background-clip: text;
@@ -154,7 +158,7 @@ st.markdown("""
     }
     .metric-title {
         color: #CBD5E1;
-        font-size: 0.9rem;
+        font-size: 0.88rem;
         font-weight: 700;
         letter-spacing: 0.8px;
         text-transform: uppercase;
@@ -162,12 +166,12 @@ st.markdown("""
     }
     .metric-value {
         color: #FFFFFF;
-        font-size: 2.1rem;
+        font-size: 2rem;
         font-weight: 800;
         letter-spacing: -0.5px;
     }
     .metric-sub {
-        font-size: 0.92rem;
+        font-size: 0.9rem;
         margin-top: 8px;
         font-weight: 600;
         display: flex;
@@ -245,7 +249,7 @@ st.markdown("""
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
     }
 
-    /* Custom Table Sizing */
+    /* Custom Glassmorphism Table */
     .custom-table-container {
         border-radius: 18px;
         overflow: hidden;
@@ -286,7 +290,6 @@ st.markdown("""
         background: rgba(99, 102, 241, 0.18);
     }
     
-    /* Table Badges */
     .badge-pill {
         padding: 7px 16px;
         border-radius: 20px;
@@ -333,7 +336,9 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# 3. Khởi tạo Session State
+# ----------------------------------------------------
+# 4. KHỞI TẠO SESSION STATE
+# ----------------------------------------------------
 if "configured" not in st.session_state:
     st.session_state.configured = False
 if "modal_step" not in st.session_state:
@@ -397,7 +402,9 @@ if "inp_log_amt" not in st.session_state:
 if "inp_log_note" not in st.session_state:
     st.session_state.inp_log_note = ""
 
-# 4. Pop-up Modal Thiết Lập
+# ----------------------------------------------------
+# 5. POP-UP MODAL THIẾT LẬP KHI KHỞI CHẠY
+# ----------------------------------------------------
 @st.dialog("⚙️ Thiết Lập Khai Báo Tài Chính", width="large")
 def show_setup_modal():
     if st.session_state.modal_step == 1:
@@ -505,7 +512,7 @@ st.session_state.monthly_history[current_month_str] = {
 }
 
 # ----------------------------------------------------
-# 5. HEADER & TOP METRICS CARDS
+# 6. HEADER & TOP METRICS CARDS
 # ----------------------------------------------------
 head_col1, head_col2 = st.columns([3, 1])
 with head_col1:
@@ -581,7 +588,7 @@ if st.session_state.savings_goal > 0:
 st.write("")
 
 # ----------------------------------------------------
-# 6. THANH SUB-TABS
+# 7. THANH DI CHUYỂN TABS CHÍNH
 # ----------------------------------------------------
 tab_stats, tab_history, tab_ai = st.tabs([
     "📊  Thống kê & Quản lý Chi tiêu", 
@@ -755,20 +762,17 @@ with tab_stats:
             st.markdown(f"<div style='text-align: right; color: #34D399; font-weight: 700; font-size: 1.05rem;'>💰 Tổng chi phát sinh: {logged_exp_total:,.0f} VNĐ</div>", unsafe_allow_html=True)
 
     if not st.session_state.daily_logs.empty:
-        # Tạo bản sao dữ liệu hiển thị đã định dạng đẹp mắt
         df_display = st.session_state.daily_logs.copy()
         df_display.reset_index(inplace=True)
         df_display.rename(columns={"index": "STT"}, inplace=True)
         df_display["STT"] = df_display["STT"] + 1
         
-        # Thêm biểu tượng Icon và định dạng hiển thị tiền
         df_display["Danh mục hiển thị"] = df_display["Danh mục"].apply(lambda c: f"{CAT_ICONS.get(c, '📌')} {c}")
         df_display["Số tiền hiển thị"] = df_display["Số tiền"].apply(lambda x: f"{int(x):,} VNĐ")
 
         df_show = df_display[["STT", "Ngày", "Danh mục hiển thị", "Số tiền hiển thị", "Ghi chú"]].copy()
         df_show.columns = ["STT", "📅 Ngày", "🏷️ Danh mục", "💵 Số tiền", "📝 Ghi chú"]
 
-        # Hiển thị bảng Streamlit hiện đại có tính năng chọn hàng
         selected_rows = []
         try:
             event = st.dataframe(
@@ -784,9 +788,8 @@ with tab_stats:
         except Exception:
             selected_rows = []
 
-        st.caption("💡 *Mẹo: Tích chọn một hoặc nhiều dòng trực tiếp trên bảng trên hoặc chọn từ danh sách thả xuống dưới đây để xóa dữ liệu nhập sai.*")
+        st.caption("💡 *Mẹo: Tích chọn một hoặc nhiều dòng trực tiếp trên bảng hoặc chọn từ danh sách thả xuống dưới đây để xóa.*")
 
-        # Khung công cụ xóa dòng chọn
         st.write("")
         col_del_action, col_del_select = st.columns([1, 1.3])
         
@@ -801,7 +804,6 @@ with tab_stats:
                     st.rerun()
 
         with col_del_select:
-            # Danh sách chọn xóa thủ công bổ sung
             options_dict = {
                 f"Mục #{idx+1} | {row['Ngày']} | {row['Danh mục']} | {row['Số tiền']:,.0f} VNĐ ({row['Ghi chú'] or 'Không ghi chú'})": idx
                 for idx, row in st.session_state.daily_logs.iterrows()
@@ -828,11 +830,9 @@ with tab_history:
     st.write("")
     st.markdown("##### 📅 Quản lý Lịch sử & Đối chiếu Chi tiêu các tháng")
     
-    # Danh sách các tháng có sẵn
     all_months = sorted(list(st.session_state.monthly_history.keys()), reverse=True)
     comp_months_options = [m for m in all_months if m != current_month_str] or all_months
 
-    # Khởi tạo trạng thái chọn tháng đối chiếu nếu chưa có
     if "comp_month_selected" not in st.session_state or st.session_state.comp_month_selected not in comp_months_options:
         st.session_state.comp_month_selected = comp_months_options[0]
 
@@ -842,13 +842,11 @@ with tab_history:
     def on_change_comp_bottom():
         st.session_state.comp_month_selected = st.session_state.comp_month_bottom
 
-    # Khung chọn tháng / Khai báo thủ công tháng trước
     h_col1, h_col2 = st.columns([1, 1.2])
     
     with h_col1:
         st.markdown("###### 📝 Nhập / Chỉnh sửa dữ liệu tháng cũ")
         
-        # Hộp chọn riêng Năm và Tháng
         now_dt = datetime.now()
         year_options = list(range(now_dt.year - 3, now_dt.year + 4))
         
@@ -870,7 +868,6 @@ with tab_history:
             
         hist_month = f"{sel_year}-{sel_month}"
         
-        # Lấy dữ liệu cũ nếu có
         existing_data = st.session_state.monthly_history.get(hist_month, {
             "income": 15000000.0,
             "expenses": st.session_state.fixed_expenses.copy(),
@@ -937,7 +934,6 @@ with tab_history:
         cur_data = st.session_state.monthly_history[current_month_str]
         prev_data = st.session_state.monthly_history.get(comp_month, cur_data)
         
-        # Chuẩn bị dữ liệu cho Grouped Bar Chart
         bar_records = []
         for cat in st.session_state.fixed_expenses.keys():
             bar_records.append({"Danh mục": cat, "Kỳ": f"Tháng trước ({comp_month})", "Số tiền": prev_data["expenses"].get(cat, 0.0)})
@@ -1016,7 +1012,6 @@ with tab_history:
     
     fig_trend = go.Figure()
     
-    # Đường Thu Nhập
     fig_trend.add_trace(go.Scatter(
         x=df_trend["Tháng"], 
         y=df_trend["Thu nhập"], 
@@ -1027,7 +1022,6 @@ with tab_history:
         hovertemplate="💵 Thu nhập: <b>%{y:,.0f} VNĐ</b><extra></extra>"
     ))
 
-    # Đường Tổng Chi Tiêu
     fig_trend.add_trace(go.Scatter(
         x=df_trend["Tháng"], 
         y=df_trend["Tổng chi tiêu"], 
@@ -1038,7 +1032,6 @@ with tab_history:
         hovertemplate="💸 Tổng chi: <b>%{y:,.0f} VNĐ</b><extra></extra>"
     ))
 
-    # Đường Số Dư
     fig_trend.add_trace(go.Scatter(
         x=df_trend["Tháng"], 
         y=df_trend["Số dư"], 
