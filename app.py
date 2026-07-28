@@ -69,7 +69,7 @@ def add_expense_callback():
         st.session_state.inp_log_amt = "0"
         st.session_state.inp_log_note = ""
 
-# 2. Tiêm CSS Tùy Biến (Styling Modern Dark & Custom Table UI 100x)
+# 2. Tiêm CSS Tùy Biến (Styling Modern Dark & Enhanced Readable Typography)
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
@@ -106,13 +106,13 @@ st.markdown("""
         box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8) !important;
     }
 
-    /* Headers & Cards */
+    /* Headers & Cards - Enlarged Sizing */
     .dash-header {
         background: linear-gradient(135deg, #818CF8 0%, #C084FC 50%, #34D399 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         font-weight: 800;
-        font-size: 2.4rem;
+        font-size: 2.6rem;
         letter-spacing: -0.5px;
     }
 
@@ -134,31 +134,31 @@ st.markdown("""
         box-shadow: 0 20px 30px -10px rgba(99, 102, 241, 0.2);
     }
     .metric-title {
-        color: #94A3B8;
-        font-size: 0.8rem;
-        font-weight: 600;
+        color: #CBD5E1;
+        font-size: 0.9rem;
+        font-weight: 700;
         letter-spacing: 0.8px;
         text-transform: uppercase;
         margin-bottom: 8px;
     }
     .metric-value {
         color: #FFFFFF;
-        font-size: 1.75rem;
+        font-size: 2.1rem;
         font-weight: 800;
         letter-spacing: -0.5px;
     }
     .metric-sub {
-        font-size: 0.825rem;
+        font-size: 0.92rem;
         margin-top: 8px;
         font-weight: 600;
         display: flex;
         align-items: center;
-        gap: 4px;
+        gap: 6px;
     }
     .sub-green { color: #34D399; }
     .sub-red { color: #F87171; }
 
-    /* Custom Navigation Tabs */
+    /* Custom Navigation Tabs - Enlarged Font */
     div[data-testid="stTabs"] {
         margin-top: 10px;
     }
@@ -176,13 +176,13 @@ st.markdown("""
 
     button[data-baseweb="tab"] {
         flex: 1 !important;
-        height: 48px !important;
+        height: 52px !important;
         border-radius: 12px !important;
         border: none !important;
         background: transparent !important;
-        color: #94A3B8 !important;
+        color: #CBD5E1 !important;
         font-weight: 700 !important;
-        font-size: 0.95rem !important;
+        font-size: 1.05rem !important;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
         display: flex !important;
         align-items: center !important;
@@ -211,7 +211,8 @@ st.markdown("""
         color: white !important;
         border: none !important;
         font-weight: 700 !important;
-        padding: 0.6rem 1.25rem !important;
+        font-size: 1rem !important;
+        padding: 0.65rem 1.35rem !important;
         transition: all 0.25s ease !important;
     }
     .stButton > button:hover {
@@ -225,9 +226,7 @@ st.markdown("""
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
     }
 
-    /* ====================================================
-       CUSTOM TABLE STYLING (100X UI FIX)
-       ==================================================== */
+    /* Custom Table Sizing */
     .custom-table-container {
         border-radius: 18px;
         overflow: hidden;
@@ -244,20 +243,20 @@ st.markdown("""
         color: #F8FAFC;
     }
     .custom-table thead tr {
-        background: linear-gradient(135deg, rgba(99, 102, 241, 0.3) 0%, rgba(139, 92, 246, 0.2) 100%);
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.35) 0%, rgba(139, 92, 246, 0.25) 100%);
         border-bottom: 1px solid rgba(255, 255, 255, 0.15);
     }
     .custom-table th {
-        padding: 16px 20px;
-        font-size: 0.82rem;
-        font-weight: 700;
+        padding: 18px 20px;
+        font-size: 0.95rem;
+        font-weight: 800;
         text-transform: uppercase;
         letter-spacing: 0.8px;
-        color: #CBD5E1;
+        color: #E2E8F0;
     }
     .custom-table td {
-        padding: 16px 20px;
-        font-size: 0.93rem;
+        padding: 18px 20px;
+        font-size: 1.05rem;
         border-bottom: 1px solid rgba(255, 255, 255, 0.06);
         vertical-align: middle;
     }
@@ -270,9 +269,9 @@ st.markdown("""
     
     /* Table Badges */
     .badge-pill {
-        padding: 6px 14px;
+        padding: 7px 16px;
         border-radius: 20px;
-        font-size: 0.82rem;
+        font-size: 0.9rem;
         font-weight: 700;
         display: inline-flex;
         align-items: center;
@@ -291,26 +290,26 @@ st.markdown("""
     }
     .badge-gray {
         background: rgba(148, 163, 184, 0.18);
-        color: #94A3B8;
+        color: #CBD5E1;
         border: 1px solid rgba(148, 163, 184, 0.3);
     }
     .cat-title {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 12px;
         font-weight: 700;
-        font-size: 0.95rem;
+        font-size: 1.05rem;
     }
     .cat-icon {
-        width: 34px;
-        height: 34px;
+        width: 38px;
+        height: 38px;
         border-radius: 10px;
         background: rgba(99, 102, 241, 0.25);
         border: 1px solid rgba(99, 102, 241, 0.35);
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.1rem;
+        font-size: 1.2rem;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -513,7 +512,7 @@ with m1:
     st.markdown(f"""
     <div class="metric-card">
         <div class="metric-title">TỔNG THU NHẬP</div>
-        <div class="metric-value">{st.session_state.income:,.0f} <span style="font-size:1rem; color:#94A3B8;">đ</span></div>
+        <div class="metric-value">{st.session_state.income:,.0f} <span style="font-size:1.1rem; color:#94A3B8;">đ</span></div>
         <div class="metric-sub sub-green">⚡ Cố định hàng tháng</div>
     </div>
     """, unsafe_allow_html=True)
@@ -522,7 +521,7 @@ with m2:
     st.markdown(f"""
     <div class="metric-card">
         <div class="metric-title">TỔNG CHI TIÊU</div>
-        <div class="metric-value">{grand_total_exp:,.0f} <span style="font-size:1rem; color:#94A3B8;">đ</span></div>
+        <div class="metric-value">{grand_total_exp:,.0f} <span style="font-size:1.1rem; color:#94A3B8;">đ</span></div>
         <div class="metric-sub sub-red">📌 Cố định: {fixed_exp_total:,.0f} đ | Phát sinh: {logged_exp_total:,.0f} đ</div>
     </div>
     """, unsafe_allow_html=True)
@@ -531,7 +530,7 @@ with m3:
     st.markdown(f"""
     <div class="metric-card">
         <div class="metric-title">SỐ DƯ CÒN LẠI</div>
-        <div class="metric-value">{remaining_balance:,.0f} <span style="font-size:1rem; color:#94A3B8;">đ</span></div>
+        <div class="metric-value">{remaining_balance:,.0f} <span style="font-size:1.1rem; color:#94A3B8;">đ</span></div>
         <div class="metric-sub {'sub-green' if remaining_balance >= 0 else 'sub-red'}">
             {'✅ Khả dụng' if remaining_balance >= 0 else '⚠️ Cảnh báo thâm hụt'}
         </div>
@@ -544,7 +543,7 @@ with m4:
     st.markdown(f"""
     <div class="metric-card">
         <div class="metric-title">MỤC TIÊU TIẾT KIỆM</div>
-        <div class="metric-value">{st.session_state.savings_goal:,.0f} <span style="font-size:1rem; color:#94A3B8;">đ</span></div>
+        <div class="metric-value">{st.session_state.savings_goal:,.0f} <span style="font-size:1.1rem; color:#94A3B8;">đ</span></div>
         <div class="metric-sub {diff_class}">🎯 {diff_text}</div>
     </div>
     """, unsafe_allow_html=True)
@@ -592,20 +591,20 @@ with tab_stats:
         fig1.update_traces(
             textposition='inside',
             textinfo='percent',
-            insidetextfont=dict(size=12, color='#FFFFFF', family="Plus Jakarta Sans"),
+            insidetextfont=dict(size=13, color='#FFFFFF', family="Plus Jakarta Sans"),
             hovertemplate="<b>%{label}</b><br>💵 Số tiền: <b>%{value:,.0f} VNĐ</b><br>📈 Tỷ lệ: <b>%{percent}</b><extra></extra>",
             marker=dict(line=dict(color='#0F172A', width=3)),
             hoverlabel=dict(
                 bgcolor="#0F172A",
                 bordercolor="#818CF8",
-                font_size=13,
+                font_size=14,
                 font_family="Plus Jakarta Sans",
                 font_color="#F8FAFC"
             )
         )
 
         fig1.add_annotation(
-            text=f"<span style='font-size:11px; color:#94A3B8; font-weight:600;'>TỔNG CỐ ĐỊNH</span><br><b style='font-size:17px; color:#F8FAFC;'>{fixed_exp_total:,.0f} đ</b>",
+            text=f"<span style='font-size:12px; color:#CBD5E1; font-weight:700;'>TỔNG CỐ ĐỊNH</span><br><b style='font-size:18px; color:#F8FAFC;'>{fixed_exp_total:,.0f} đ</b>",
             x=0.5, y=0.5,
             showarrow=False,
             align="center"
@@ -614,7 +613,7 @@ with tab_stats:
         fig1.update_layout(
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
-            font=dict(color='#F8FAFC', family="Plus Jakarta Sans", size=12),
+            font=dict(color='#F8FAFC', family="Plus Jakarta Sans", size=13),
             showlegend=True,
             legend=dict(
                 orientation="h",
@@ -622,10 +621,10 @@ with tab_stats:
                 y=-0.35,
                 xanchor="center",
                 x=0.5,
-                font=dict(size=11, color='#CBD5E1')
+                font=dict(size=13, color='#CBD5E1')
             ),
             margin=dict(t=20, b=60, l=10, r=10),
-            height=370
+            height=380
         )
         st.plotly_chart(fig1, use_container_width=True)
 
@@ -667,20 +666,20 @@ with tab_stats:
         fig2.update_traces(
             textposition='inside',
             textinfo='percent',
-            insidetextfont=dict(size=12, color='#FFFFFF', family="Plus Jakarta Sans"),
+            insidetextfont=dict(size=13, color='#FFFFFF', family="Plus Jakarta Sans"),
             hovertemplate="<b>%{label}</b><br>💵 Số tiền: <b>%{value:,.0f} VNĐ</b><br>📈 Tỷ lệ: <b>%{percent}</b><extra></extra>",
             marker=dict(line=dict(color='#0F172A', width=3)),
             hoverlabel=dict(
                 bgcolor="#0F172A",
                 bordercolor=bal_color,
-                font_size=13,
+                font_size=14,
                 font_family="Plus Jakarta Sans",
                 font_color="#F8FAFC"
             )
         )
 
         fig2.add_annotation(
-            text=f"<span style='font-size:11px; color:#94A3B8; font-weight:600;'>{bal_label}</span><br><b style='font-size:17px; color:{bal_color};'>{remaining_balance:,.0f} đ</b>",
+            text=f"<span style='font-size:12px; color:#CBD5E1; font-weight:700;'>{bal_label}</span><br><b style='font-size:18px; color:{bal_color};'>{remaining_balance:,.0f} đ</b>",
             x=0.5, y=0.5,
             showarrow=False,
             align="center"
@@ -689,7 +688,7 @@ with tab_stats:
         fig2.update_layout(
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
-            font=dict(color='#F8FAFC', family="Plus Jakarta Sans", size=12),
+            font=dict(color='#F8FAFC', family="Plus Jakarta Sans", size=13),
             showlegend=True,
             legend=dict(
                 orientation="h",
@@ -697,10 +696,10 @@ with tab_stats:
                 y=-0.35,
                 xanchor="center",
                 x=0.5,
-                font=dict(size=11, color='#CBD5E1')
+                font=dict(size=13, color='#CBD5E1')
             ),
             margin=dict(t=20, b=60, l=10, r=10),
-            height=370
+            height=380
         )
         st.plotly_chart(fig2, use_container_width=True)
 
@@ -879,24 +878,39 @@ with tab_history:
         fig_bar.update_layout(
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
-            font=dict(color='#F8FAFC', family="Plus Jakarta Sans", size=12),
+            font=dict(color='#F8FAFC', family="Plus Jakarta Sans", size=13),
             hoverlabel=dict(
                 bgcolor="rgba(15, 23, 42, 0.95)",
                 bordercolor="#818CF8",
-                font_size=13,
+                font_size=14,
                 font_family="Plus Jakarta Sans"
             ),
-            xaxis=dict(gridcolor='rgba(255,255,255,0.05)', title=""),
-            yaxis=dict(gridcolor='rgba(255,255,255,0.08)', title="VNĐ"),
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-            height=380,
-            margin=dict(t=20, b=20, l=10, r=10)
+            xaxis=dict(
+                gridcolor='rgba(255,255,255,0.05)', 
+                title="",
+                tickfont=dict(size=13, color="#F8FAFC")
+            ),
+            yaxis=dict(
+                gridcolor='rgba(255,255,255,0.08)', 
+                title="VNĐ",
+                tickfont=dict(size=13, color="#CBD5E1")
+            ),
+            legend=dict(
+                orientation="h", 
+                yanchor="bottom", 
+                y=1.04, 
+                xanchor="right", 
+                x=1,
+                font=dict(size=13, color="#F8FAFC")
+            ),
+            height=390,
+            margin=dict(t=30, b=20, l=10, r=10)
         )
         st.plotly_chart(fig_bar, use_container_width=True)
 
     st.divider()
     
-    # --- BIỂU ĐỒ XU HƯỚNG TỔNG TÀI CHÍNH VỚI HOVER UNIFIED & SPIKELINES ---
+    # --- BIỂU ĐỒ XU HƯỚNG TỔNG TÀI CHÍNH VỚI CHỮ TO RÕ NÉT ---
     st.markdown("##### 📈 Biến động Thu nhập - Chi tiêu - Số dư qua thời gian")
     st.caption("💡 *Di chuột lên bất kỳ mốc thời gian nào để xem bảng tổng hợp thông tin chi tiết tại điểm đó.*")
     
@@ -921,8 +935,8 @@ with tab_history:
         y=df_trend["Thu nhập"], 
         mode='lines+markers', 
         name='Thu nhập',
-        line=dict(color='#818CF8', width=3.5, shape='spline'),
-        marker=dict(size=10, symbol='circle', line=dict(color='#FFFFFF', width=2)),
+        line=dict(color='#818CF8', width=4, shape='spline'),
+        marker=dict(size=11, symbol='circle', line=dict(color='#FFFFFF', width=2)),
         hovertemplate="💵 Thu nhập: <b>%{y:,.0f} VNĐ</b><extra></extra>"
     ))
 
@@ -932,8 +946,8 @@ with tab_history:
         y=df_trend["Tổng chi tiêu"], 
         mode='lines+markers', 
         name='Tổng chi tiêu',
-        line=dict(color='#FB7185', width=3.5, shape='spline'),
-        marker=dict(size=10, symbol='circle', line=dict(color='#FFFFFF', width=2)),
+        line=dict(color='#FB7185', width=4, shape='spline'),
+        marker=dict(size=11, symbol='circle', line=dict(color='#FFFFFF', width=2)),
         hovertemplate="💸 Tổng chi: <b>%{y:,.0f} VNĐ</b><extra></extra>"
     ))
 
@@ -943,26 +957,27 @@ with tab_history:
         y=df_trend["Số dư"], 
         mode='lines+markers', 
         name='Số dư tích lũy',
-        line=dict(color='#34D399', width=3.5, shape='spline'),
-        marker=dict(size=10, symbol='circle', line=dict(color='#FFFFFF', width=2)),
+        line=dict(color='#34D399', width=4, shape='spline'),
+        marker=dict(size=11, symbol='circle', line=dict(color='#FFFFFF', width=2)),
         hovertemplate="💎 Số dư: <b>%{y:,.0f} VNĐ</b><extra></extra>"
     ))
     
     fig_trend.update_layout(
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
-        font=dict(color='#F8FAFC', family="Plus Jakarta Sans", size=12),
+        font=dict(color='#F8FAFC', family="Plus Jakarta Sans", size=13),
         hovermode="x unified",
         hoverlabel=dict(
             bgcolor="rgba(15, 23, 42, 0.95)",
             bordercolor="rgba(99, 102, 241, 0.6)",
-            font_size=13,
+            font_size=15,
             font_family="Plus Jakarta Sans",
             font_color="#F8FAFC"
         ),
         xaxis=dict(
-            gridcolor='rgba(255,255,255,0.05)', 
+            gridcolor='rgba(255,255,255,0.08)', 
             type='category',
+            tickfont=dict(size=14, color='#F8FAFC', family="Plus Jakarta Sans"),
             showspikes=True,
             spikecolor="rgba(129, 140, 248, 0.6)",
             spikethickness=1.5,
@@ -971,15 +986,23 @@ with tab_history:
         ),
         yaxis=dict(
             gridcolor='rgba(255,255,255,0.08)', 
-            title="VNĐ",
+            title=dict(text="VNĐ", font=dict(size=13, color="#CBD5E1")),
+            tickfont=dict(size=13, color='#CBD5E1'),
             showspikes=True,
             spikecolor="rgba(129, 140, 248, 0.6)",
             spikethickness=1.5,
             spikedash="dot"
         ),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-        height=380,
-        margin=dict(t=20, b=20, l=10, r=10)
+        legend=dict(
+            orientation="h", 
+            yanchor="bottom", 
+            y=1.04, 
+            xanchor="right", 
+            x=1,
+            font=dict(size=14, color="#F8FAFC")
+        ),
+        height=400,
+        margin=dict(t=30, b=30, l=10, r=10)
     )
     st.plotly_chart(fig_trend, use_container_width=True)
 
@@ -1062,7 +1085,7 @@ with tab_history:
 <td style="text-align: right; font-weight: 700; color: #F8FAFC;">{val_cur:,.0f} VNĐ</td>
 <td style="text-align: right;"><span class="badge-pill {badge_class}">{diff_str}</span></td>
 <td style="text-align: center;"><span class="badge-pill {badge_class}">{pct_str}</span></td>
-<td style="text-align: center; font-weight: 600; font-size: 0.85rem; color: #CBD5E1;">{status_str}</td>
+<td style="text-align: center; font-weight: 600; font-size: 0.95rem; color: #CBD5E1;">{status_str}</td>
 </tr>"""
 
         html_table += """</tbody>
