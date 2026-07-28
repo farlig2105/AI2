@@ -166,24 +166,47 @@ def add_expense_action(log_date, log_cat, amt, log_note):
     st.session_state.inp_log_note = ""
     sync_data()
 
-def confirm_emergency_action():
-    """Callback xác nhận chi: Thêm vào bảng, reset dữ liệu và tự động làm mới trang."""
+# --- KHẮC PHỤC LỖI KHÔNG PHẢN ỨNG TẠI POPUP ---
+@st.dialog("⚠️ Xác nhận Tiêu dùng Số dư Khẩn cấp")
+def confirm_emergency_expense_modal():
+    """Dialog hỏi xác nhận người dùng khi khoản chi động tới Quỹ khẩn cấp."""
     pending = st.session_state.get("pending_expense", {})
-    if pending:
-        add_expense_action(
-            pending["log_date"],
-            pending["log_cat"],
-            pending["amt"],
-            pending["log_note"]
-        )
+    if not pending:
         st.session_state.show_confirm_dialog = False
-        st.session_state.pending_expense = None
-        st.session_state.expense_added_msg = True
+        st.rerun()
+        return
 
-def cancel_emergency_action():
-    """Callback hủy bỏ: Đóng hộp thoại và GIỮ NGUYÊN toàn bộ thông tin đã nhập."""
-    st.session_state.show_confirm_dialog = False
-    st.session_state.pending_expense = None
+    amt = pending.get("amt", 0)
+    log_cat = pending.get("log_cat", "")
+    future_bal = pending.get("future_bal", 0)
+    em_fund = pending.get("em_fund", 0)
+
+    st.warning("🚨 **CẢNH BÁO NGUY CƠ TÀI CHÍNH!**")
+    st.write(
+        f"Khoản chi **{amt:,.0f} VNĐ** cho mục **{log_cat}** sẽ khiến số dư còn lại của bạn "
+        f"giảm xuống **{future_bal:,.0f} VNĐ**, chạm hoặc rơi xuống dưới mức **Quỹ Khẩn Cấp ({em_fund:,.0f} VNĐ)**."
+    )
+    st.info("💡 *Số tiền khẩn cấp này được quy định là không dùng tới trừ trường hợp bất khả kháng. Bạn có chắc chắn muốn duyệt khoản chi này không?*")
+    
+    col_confirm, col_cancel = st.columns(2)
+    with col_confirm:
+        if st.button("Xác nhận chi dùng ⚠️", type="primary", use_container_width=True):
+            add_expense_action(
+                pending["log_date"],
+                pending["log_cat"],
+                pending["amt"],
+                pending["log_note"]
+            )
+            st.session_state.show_confirm_dialog = False
+            st.session_state.pending_expense = None
+            st.session_state.expense_added_msg = True
+            st.rerun()
+            
+    with col_cancel:
+        if st.button("Hủy bỏ giao dịch ❌", use_container_width=True):
+            st.session_state.show_confirm_dialog = False
+            st.session_state.pending_expense = None
+            st.rerun()
 
 def handle_add_expense_click():
     """Callback kiểm tra và xử lý khi bấm nút Thêm khoản chi."""
@@ -218,22 +241,6 @@ def handle_add_expense_click():
     else:
         add_expense_action(log_date, log_cat, log_amt, log_note)
         st.session_state.expense_added_msg = True
-
-@st.dialog("⚠️ Xác nhận Tiêu dùng Số dư Khẩn cấp")
-def confirm_emergency_expense_modal(amt, log_date, log_cat, log_note, future_bal, em_fund):
-    """Dialog hỏi xác nhận người dùng khi khoản chi động tới Quỹ khẩn cấp."""
-    st.warning("🚨 **CẢNH BÁO NGUY CƠ TÀI CHÍNH!**")
-    st.write(
-        f"Khoản chi **{amt:,.0f} VNĐ** cho mục **{log_cat}** sẽ khiến số dư còn lại của bạn "
-        f"giảm xuống **{future_bal:,.0f} VNĐ**, chạm hoặc rơi xuống dưới mức **Quỹ Khẩn Cấp ({em_fund:,.0f} VNĐ)**."
-    )
-    st.info("💡 *Số tiền khẩn cấp này được quy định là không dùng tới trừ trường hợp bất khả kháng. Bạn có chắc chắn muốn duyệt khoản chi này không?*")
-    
-    col_confirm, col_cancel = st.columns(2)
-    with col_confirm:
-        st.button("Xác nhận chi dùng ⚠️", type="primary", use_container_width=True, on_click=confirm_emergency_action)
-    with col_cancel:
-        st.button("Hủy bỏ giao dịch ❌", use_container_width=True, on_click=cancel_emergency_action)
 
 def open_config_callback():
     """Callback mở lại bảng Cấu hình."""
@@ -880,18 +887,9 @@ def show_setup_modal():
 if not st.session_state.configured:
     show_setup_modal()
 
-# HIỂN THỊ DIALOG XÁC NHẬN NẾU CÓ CẢNH BÁO KHẨN CẤP
+# HIỂN THỊ DIALOG XÁC NHẬN CHUẨN
 if st.session_state.get("show_confirm_dialog", False):
-    pending = st.session_state.get("pending_expense", {})
-    if pending:
-        confirm_emergency_expense_modal(
-            pending["amt"],
-            pending["log_date"],
-            pending["log_cat"],
-            pending["log_note"],
-            pending["future_bal"],
-            pending["em_fund"]
-        )
+    confirm_emergency_expense_modal()
 
 cur_exp_combined = st.session_state.fixed_expenses.copy()
 if not st.session_state.daily_logs.empty:
