@@ -678,6 +678,20 @@ with tab_history:
     st.write("")
     st.markdown("##### 📅 Quản lý Lịch sử & Đối chiếu Chi tiêu các tháng")
     
+    # Danh sách các tháng có sẵn
+    all_months = sorted(list(st.session_state.monthly_history.keys()), reverse=True)
+    comp_months_options = [m for m in all_months if m != current_month_str] or all_months
+
+    # Khởi tạo trạng thái chọn tháng đối chiếu nếu chưa có
+    if "comp_month_selected" not in st.session_state or st.session_state.comp_month_selected not in comp_months_options:
+        st.session_state.comp_month_selected = comp_months_options[0]
+
+    def on_change_comp_top():
+        st.session_state.comp_month_selected = st.session_state.comp_month_top
+
+    def on_change_comp_bottom():
+        st.session_state.comp_month_selected = st.session_state.comp_month_bottom
+
     # Khung chọn tháng / Khai báo thủ công tháng trước
     h_col1, h_col2 = st.columns([1, 1.2])
     
@@ -740,50 +754,55 @@ with tab_history:
 
     with h_col2:
         st.markdown("###### 🔍 So sánh chi tiết tháng này với tháng đối chiếu")
-        all_months = sorted(list(st.session_state.monthly_history.keys()), reverse=True)
         
-        comp_month = st.selectbox("Chọn tháng để đối chiếu với Tháng này:", [m for m in all_months if m != current_month_str] or all_months)
+        idx_top = comp_months_options.index(st.session_state.comp_month_selected) if st.session_state.comp_month_selected in comp_months_options else 0
+        comp_month = st.selectbox(
+            "Chọn tháng để đối chiếu với Tháng này:", 
+            comp_months_options,
+            index=idx_top,
+            key="comp_month_top",
+            on_change=on_change_comp_top
+        )
         
-        if comp_month:
-            cur_data = st.session_state.monthly_history[current_month_str]
-            prev_data = st.session_state.monthly_history[comp_month]
-            
-            # Chuẩn bị dữ liệu cho Grouped Bar Chart
-            bar_records = []
-            for cat in st.session_state.fixed_expenses.keys():
-                bar_records.append({"Danh mục": cat, "Kỳ": f"Tháng trước ({comp_month})", "Số tiền": prev_data["expenses"].get(cat, 0.0)})
-                bar_records.append({"Danh mục": cat, "Kỳ": f"Tháng này ({current_month_str})", "Số tiền": cur_data["expenses"].get(cat, 0.0)})
-            
-            df_bar = pd.DataFrame(bar_records)
-            
-            fig_bar = px.bar(
-                df_bar, 
-                x="Danh mục", 
-                y="Số tiền", 
-                color="Kỳ", 
-                barmode="group",
-                color_discrete_map={
-                    f"Tháng trước ({comp_month})": "#818CF8",
-                    f"Tháng này ({current_month_str})": "#34D399"
-                }
-            )
-            
-            fig_bar.update_traces(
-                hovertemplate="<b>%{x}</b><br>💵 Số tiền: <b>%{y:,.0f} VNĐ</b><extra></extra>",
-                marker=dict(line=dict(color='#0F172A', width=1))
-            )
-            
-            fig_bar.update_layout(
-                paper_bgcolor='rgba(0,0,0,0)',
-                plot_bgcolor='rgba(0,0,0,0)',
-                font=dict(color='#F8FAFC', family="Plus Jakarta Sans", size=12),
-                xaxis=dict(gridcolor='rgba(255,255,255,0.05)', title=""),
-                yaxis=dict(gridcolor='rgba(255,255,255,0.08)', title="VNĐ"),
-                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-                height=380,
-                margin=dict(t=20, b=20, l=10, r=10)
-            )
-            st.plotly_chart(fig_bar, use_container_width=True)
+        cur_data = st.session_state.monthly_history[current_month_str]
+        prev_data = st.session_state.monthly_history.get(comp_month, cur_data)
+        
+        # Chuẩn bị dữ liệu cho Grouped Bar Chart
+        bar_records = []
+        for cat in st.session_state.fixed_expenses.keys():
+            bar_records.append({"Danh mục": cat, "Kỳ": f"Tháng trước ({comp_month})", "Số tiền": prev_data["expenses"].get(cat, 0.0)})
+            bar_records.append({"Danh mục": cat, "Kỳ": f"Tháng này ({current_month_str})", "Số tiền": cur_data["expenses"].get(cat, 0.0)})
+        
+        df_bar = pd.DataFrame(bar_records)
+        
+        fig_bar = px.bar(
+            df_bar, 
+            x="Danh mục", 
+            y="Số tiền", 
+            color="Kỳ", 
+            barmode="group",
+            color_discrete_map={
+                f"Tháng trước ({comp_month})": "#818CF8",
+                f"Tháng này ({current_month_str})": "#34D399"
+            }
+        )
+        
+        fig_bar.update_traces(
+            hovertemplate="<b>%{x}</b><br>💵 Số tiền: <b>%{y:,.0f} VNĐ</b><extra></extra>",
+            marker=dict(line=dict(color='#0F172A', width=1))
+        )
+        
+        fig_bar.update_layout(
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            font=dict(color='#F8FAFC', family="Plus Jakarta Sans", size=12),
+            xaxis=dict(gridcolor='rgba(255,255,255,0.05)', title=""),
+            yaxis=dict(gridcolor='rgba(255,255,255,0.08)', title="VNĐ"),
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+            height=380,
+            margin=dict(t=20, b=20, l=10, r=10)
+        )
+        st.plotly_chart(fig_bar, use_container_width=True)
 
     st.divider()
     
@@ -816,9 +835,27 @@ with tab_history:
     )
     st.plotly_chart(fig_trend, use_container_width=True)
 
+    st.divider()
+
     # --- BẢNG BÁO CÁO CHI TIẾT TĂNG/GIẢM CHI TIÊU ---
-    if comp_month:
-        st.markdown(f"##### 📊 Bảng so sánh chi tiêu chi tiết ({current_month_str} vs {comp_month})")
+    col_tbl_title, col_tbl_select = st.columns([2, 1])
+    with col_tbl_title:
+        st.markdown(f"##### 📊 Bảng so sánh chi tiêu chi tiết ({current_month_str} vs {st.session_state.comp_month_selected})")
+    with col_tbl_select:
+        idx_bot = comp_months_options.index(st.session_state.comp_month_selected) if st.session_state.comp_month_selected in comp_months_options else 0
+        st.selectbox(
+            "Chọn tháng đối chiếu:",
+            comp_months_options,
+            index=idx_bot,
+            key="comp_month_bottom",
+            on_change=on_change_comp_bottom
+        )
+
+    tbl_comp_month = st.session_state.comp_month_selected
+    if tbl_comp_month:
+        cur_data = st.session_state.monthly_history[current_month_str]
+        prev_data = st.session_state.monthly_history.get(tbl_comp_month, cur_data)
+        
         comp_table = []
         for cat in st.session_state.fixed_expenses.keys():
             val_cur = cur_data["expenses"].get(cat, 0.0)
@@ -828,7 +865,7 @@ with tab_history:
             
             comp_table.append({
                 "Danh mục": cat,
-                f"Tháng trước ({comp_month})": f"{val_prev:,.0f} VNĐ",
+                f"Tháng trước ({tbl_comp_month})": f"{val_prev:,.0f} VNĐ",
                 f"Tháng này ({current_month_str})": f"{val_cur:,.0f} VNĐ",
                 "Chênh lệch (VNĐ)": f"{'+' if diff > 0 else ''}{diff:,.0f} VNĐ",
                 "Phần trăm": f"{'+' if pct > 0 else ''}{pct:.1f}%"
