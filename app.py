@@ -381,7 +381,7 @@ with head_col2:
 
 st.write("")
 
-# Tính toán chỉ số
+# Tính toán chỉ số tổng quát
 fixed_exp_total = sum(st.session_state.fixed_expenses.values())
 logged_exp_total = st.session_state.daily_logs["Số tiền"].sum() if not st.session_state.daily_logs.empty else 0.0
 grand_total_exp = fixed_exp_total + logged_exp_total
@@ -404,7 +404,7 @@ with m2:
     <div class="metric-card">
         <div class="metric-title">TỔNG CHI TIÊU</div>
         <div class="metric-value">{grand_total_exp:,.0f} <span style="font-size:1rem; color:#94A3B8;">đ</span></div>
-        <div class="metric-sub sub-red">📌 Cố định: {fixed_exp_total:,.0f} đ</div>
+        <div class="metric-sub sub-red">📌 Cố định: {fixed_exp_total:,.0f} đ | Phát sinh: {logged_exp_total:,.0f} đ</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -451,56 +451,130 @@ tab_stats, tab_ai = st.tabs(["📊  Thống kê & Quản lý Chi tiêu", "🤖  
 # ================= TAB 1: THỐNG KÊ & PHÂN BỔ =================
 with tab_stats:
     st.write("")
-    col_chart, col_form = st.columns([1.15, 1])
+    col_chart1, col_chart2, col_form = st.columns([1, 1, 0.95])
 
-    with col_chart:
+    # --- BIỂU ĐỒ 1: CẤU TRÚC NGÂN SÁCH CỐ ĐỊNH ---
+    with col_chart1:
         st.markdown("##### 📊 Phân bổ ngân sách cố định")
         df_fixed = pd.DataFrame(list(st.session_state.fixed_expenses.items()), columns=["Danh mục", "Số tiền"])
         
-        fig = px.pie(
+        fig1 = px.pie(
             df_fixed, 
             values="Số tiền", 
             names="Danh mục", 
             hole=0.6,
             color_discrete_sequence=['#818CF8', '#34D399', '#FBBF24', '#F87171', '#A78BFA', '#F472B6']
         )
-        fig.update_traces(
+        fig1.update_traces(
             textposition='inside',
             textinfo='percent',
             hovertemplate='<b>%{label}</b><br>Số tiền: %{value:,.0f} VNĐ<br>Tỷ lệ: %{percent}<extra></extra>'
         )
 
-        fig.add_annotation(
-            text=f"<span style='font-size:12px; color:#94A3B8; font-weight:600;'>TỔNG CỐ ĐỊNH</span><br><b style='font-size:18px; color:#F8FAFC;'>{fixed_exp_total:,.0f} đ</b>",
+        fig1.add_annotation(
+            text=f"<span style='font-size:11px; color:#94A3B8; font-weight:600;'>TỔNG CỐ ĐỊNH</span><br><b style='font-size:16px; color:#F8FAFC;'>{fixed_exp_total:,.0f} đ</b>",
             x=0.5, y=0.5,
             showarrow=False,
             align="center"
         )
 
-        fig.update_layout(
+        fig1.update_layout(
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
-            font=dict(color='#F8FAFC', family="Plus Jakarta Sans", size=13),
+            font=dict(color='#F8FAFC', family="Plus Jakarta Sans", size=12),
             showlegend=True,
             legend=dict(
                 orientation="h",
                 yanchor="bottom",
-                y=-0.25,
+                y=-0.3,
                 xanchor="center",
                 x=0.5,
-                font=dict(size=12)
+                font=dict(size=11)
             ),
             margin=dict(t=10, b=50, l=10, r=10),
-            height=360
+            height=350
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig1, use_container_width=True)
 
+    # --- BIỂU ĐỒ 2: THỰC TẾ CHI TIÊU & SỐ DƯ CÒN LẠI ---
+    with col_chart2:
+        st.markdown("##### 📈 Chi tiêu thực tế & Số dư còn lại")
+        
+        # Xây dựng danh sách các phần tử cho biểu đồ 2
+        chart2_list = []
+        
+        # 1. Các khoản chi cố định
+        for cat, amt in st.session_state.fixed_expenses.items():
+            if amt > 0:
+                chart2_list.append({"Danh mục": cat, "Số tiền": amt, "Loại": "Chi cố định"})
+                
+        # 2. Các khoản chi phát sinh thực tế nhập từ bảng
+        if logged_exp_total > 0:
+            chart2_list.append({"Danh mục": "Chi phát sinh thực tế", "Số tiền": logged_exp_total, "Loại": "Chi phát sinh"})
+            
+        # 3. Khoảng tiết kiệm / số dư còn lại sau chi tiêu
+        if remaining_balance > 0:
+            chart2_list.append({"Danh mục": "Số dư còn lại", "Số tiền": remaining_balance, "Loại": "Số dư"})
+
+        df_chart2 = pd.DataFrame(chart2_list)
+
+        # Định nghĩa màu sắc nổi bật cho từng mục
+        color_map = {
+            "Số dư còn lại": "#34D399",          # Xanh emerald rực rỡ cho số dư/tiết kiệm
+            "Chi phát sinh thực tế": "#FB7185",  # Đỏ hồng phát sinh
+        }
+
+        fig2 = px.pie(
+            df_chart2, 
+            values="Số tiền", 
+            names="Danh mục", 
+            hole=0.6,
+            color="Danh mục",
+            color_discrete_map=color_map,
+            color_discrete_sequence=['#818CF8', '#A78BFA', '#FBBF24', '#38BDF8', '#818CF8', '#C084FC']
+        )
+        fig2.update_traces(
+            textposition='inside',
+            textinfo='percent',
+            hovertemplate='<b>%{label}</b><br>Số tiền: %{value:,.0f} VNĐ<br>Tỷ lệ: %{percent}<extra></extra>'
+        )
+
+        # Cấu hình hiển thị khoản tiết kiệm/số dư còn lại ở giữa hình tròn
+        bal_color = "#34D399" if remaining_balance >= 0 else "#F87171"
+        bal_label = "SỐ DƯ CÒN LẠI" if remaining_balance >= 0 else "THÂM HỤT"
+
+        fig2.add_annotation(
+            text=f"<span style='font-size:11px; color:#94A3B8; font-weight:600;'>{bal_label}</span><br><b style='font-size:16px; color:{bal_color};'>{remaining_balance:,.0f} đ</b>",
+            x=0.5, y=0.5,
+            showarrow=False,
+            align="center"
+        )
+
+        fig2.update_layout(
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            font=dict(color='#F8FAFC', family="Plus Jakarta Sans", size=12),
+            showlegend=True,
+            legend=dict(
+                orientation="h",
+                yanchor="bottom",
+                y=-0.3,
+                xanchor="center",
+                x=0.5,
+                font=dict(size=11)
+            ),
+            margin=dict(t=10, b=50, l=10, r=10),
+            height=350
+        )
+        st.plotly_chart(fig2, use_container_width=True)
+
+    # --- KHUNG NHẬP KHOẢN CHI THỰC TẾ ---
     with col_form:
         st.markdown("##### ✍️ Ghi nhận khoản chi thực tế")
         log_date = st.date_input("Ngày giao dịch")
         log_cat = st.selectbox("Danh mục", list(st.session_state.fixed_expenses.keys()))
         
-        # Ô nhập số tiền động với Callback tự nhảy số & nhảy chữ bên dưới
+        # Ô nhập số tiền động tự nhảy dấu phẩy và hiển thị chữ viết tắt bên dưới
         st.text_input(
             "Số tiền (VNĐ)",
             key="inp_log_amt",
