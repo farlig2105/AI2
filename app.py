@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 from datetime import datetime
 import json
 import os
+import hashlib
 import streamlit.components.v1 as components
 
 # ----------------------------------------------------
@@ -26,23 +27,71 @@ CAT_ICONS = {
     "Khác": "📦"
 }
 
-DATA_FILE = "finflow_data.json"
+USERS_FILE = "users.json"
 
 # ----------------------------------------------------
-# 2. XỬ LÝ LƯU & TẢI DỮ LIỆU TỰ ĐỘNG LÊN MÁY TÍNH
+# 2. XỬ LÝ XÁC THỰC NGƯỜI DÙNG & MÃ HÓA MẬT KHẨU
+# ----------------------------------------------------
+def hash_password(password: str) -> str:
+    """Mã hóa mật khẩu bằng SHA-256 để đảm bảo bảo mật."""
+    return hashlib.sha256(password.encode('utf-8')).hexdigest()
+
+def load_users() -> dict:
+    """Tải danh sách tài khoản đã đăng ký."""
+    if os.path.exists(USERS_FILE):
+        try:
+            with open(USERS_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return {}
+    return {}
+
+def save_users(users: dict):
+    """Lưu danh sách tài khoản mới."""
+    try:
+        with open(USERS_FILE, "w", encoding="utf-8") as f:
+            json.dump(users, f, ensure_ascii=False, indent=4)
+    except Exception:
+        pass
+
+def get_user_data_file() -> str:
+    """Trả về đường dẫn file dữ liệu riêng của người dùng hiện tại."""
+    current_user = st.session_state.get("current_user", "default")
+    return f"finflow_data_{current_user}.json"
+
+def logout_user():
+    """Xóa bộ nhớ đệm session state và đăng xuất."""
+    keys_to_clear = [
+        "authenticated", "current_user", "data_loaded_from_disk", 
+        "configured", "income", "fixed_expenses", "savings_goal", 
+        "daily_logs", "monthly_history", "chat_history", "modal_step",
+        "inp_income", "inp_rent", "inp_food", "inp_util", "inp_ent", 
+        "inp_trans", "inp_other", "inp_log_amt", "inp_log_note", "inp_goal"
+    ]
+    for key in keys_to_clear:
+        if key in st.session_state:
+            del st.session_state[key]
+    st.rerun()
+
+# ----------------------------------------------------
+# 3. XỬ LÝ LƯU & TẢI DỮ LIỆU TỰ ĐỘNG
 # ----------------------------------------------------
 def load_user_data():
-    """Tải dữ liệu đã lưu từ tệp JSON trên máy người dùng."""
-    if os.path.exists(DATA_FILE):
+    """Tải dữ liệu đã lưu từ tệp JSON riêng của người dùng."""
+    user_file = get_user_data_file()
+    if os.path.exists(user_file):
         try:
-            with open(DATA_FILE, "r", encoding="utf-8") as f:
+            with open(user_file, "r", encoding="utf-8") as f:
                 return json.load(f)
         except Exception:
             return None
     return None
 
 def save_user_data():
-    """Lưu toàn bộ dữ liệu hiện tại vào tệp JSON trên máy."""
+    """Lưu toàn bộ dữ liệu hiện tại vào tệp JSON riêng của người dùng."""
+    if not st.session_state.get("authenticated", False):
+        return
+
     daily_logs_list = []
     if "daily_logs" in st.session_state and isinstance(st.session_state.daily_logs, pd.DataFrame):
         daily_logs_list = st.session_state.daily_logs.to_dict(orient="records")
@@ -56,7 +105,8 @@ def save_user_data():
         "monthly_history": st.session_state.get("monthly_history", {})
     }
     try:
-        with open(DATA_FILE, "w", encoding="utf-8") as f:
+        user_file = get_user_data_file()
+        with open(user_file, "w", encoding="utf-8") as f:
             json.dump(data_to_save, f, ensure_ascii=False, indent=4)
     except Exception:
         pass
@@ -66,7 +116,7 @@ def sync_data():
     save_user_data()
 
 # ----------------------------------------------------
-# 3. BỘ HÀM XỬ LÝ DÙNG CHUNG
+# 4. BỘ HÀM XỬ LÝ DÙNG CHUNG
 # ----------------------------------------------------
 def parse_amount(val) -> float:
     if isinstance(val, (int, float)):
@@ -120,7 +170,7 @@ def add_expense_callback():
         sync_data()
 
 # ----------------------------------------------------
-# 4. TIÊM CSS TÙY BIẾN (MODERN DARK & GLASSMORPHISM)
+# 5. TIÊM CSS TÙY BIẾN (MODERN DARK & GLASSMORPHISM)
 # ----------------------------------------------------
 st.markdown("""
 <style>
@@ -356,11 +406,73 @@ st.markdown("""
         justify-content: center;
         font-size: 1.2rem;
     }
+    
+    /* Style cho màn hình Login */
+    .auth-container {
+        max-width: 460px;
+        margin: 60px auto;
+        padding: 35px;
+        background: rgba(15, 23, 42, 0.75);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 24px;
+        backdrop-filter: blur(20px);
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+    }
 </style>
 """, unsafe_allow_html=True)
 
 # ----------------------------------------------------
-# 5. KHỞI TẠO SESSION STATE & TẢI DỮ LIỆU ĐÃ LƯU
+# 6. MÀN HÌNH ĐĂNG NHẬP / ĐĂNG KÝ
+# ----------------------------------------------------
+if not st.session_state.get("authenticated", False):
+    col_l1, col_l2, col_l3 = st.columns([1, 1.3, 1])
+    with col_l2:
+        st.write("")
+        st.markdown('<div style="text-align: center; margin-bottom: 20px;"><span class="dash-header">💎 FinFlow</span><p style="color: #CBD5E1; font-weight: 600;">Hệ thống Quản lý Tài chính Cá nhân</p></div>', unsafe_allow_html=True)
+        
+        tab_login, tab_register = st.tabs(["🔑 Đăng nhập", "📝 Đăng ký"])
+        users = load_users()
+
+        with tab_login:
+            st.write("")
+            login_username = st.text_input("Tên đăng nhập / Email", key="login_usr").strip().lower()
+            login_password = st.text_input("Mật khẩu", type="password", key="login_pwd")
+            
+            if st.button("Đăng nhập vào hệ thống 🚀", use_container_width=True):
+                if not login_username or not login_password:
+                    st.error("Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.")
+                elif login_username in users and users[login_username] == hash_password(login_password):
+                    st.session_state.authenticated = True
+                    st.session_state.current_user = login_username
+                    st.success(f"Đăng nhập thành công! Chào mừng {login_username}.")
+                    st.rerun()
+                else:
+                    st.error("Tên đăng nhập hoặc mật khẩu không chính xác.")
+
+        with tab_register:
+            st.write("")
+            reg_username = st.text_input("Tên đăng nhập mới", key="reg_usr").strip().lower()
+            reg_password = st.text_input("Mật khẩu", type="password", key="reg_pwd")
+            reg_confirm = st.text_input("Xác nhận mật khẩu", type="password", key="reg_conf")
+
+            if st.button("Tạo tài khoản mới ✨", use_container_width=True):
+                if not reg_username or not reg_password:
+                    st.error("Vui lòng điền đầy đủ thông tin đăng ký.")
+                elif len(reg_username) < 3:
+                    st.error("Tên đăng nhập phải có ít nhất 3 ký tự.")
+                elif reg_password != reg_confirm:
+                    st.error("Mật khẩu xác nhận không khớp.")
+                elif reg_username in users:
+                    st.error("Tên đăng nhập này đã tồn tại trên hệ thống. Vui lòng chọn tên khác.")
+                else:
+                    users[reg_username] = hash_password(reg_password)
+                    save_users(users)
+                    st.success("Tạo tài khoản thành công! Bạn có thể chuyển sang tab Đăng nhập ngay bây giờ.")
+
+    st.stop()  # Dừng ứng dụng tại đây nếu chưa đăng nhập
+
+# ----------------------------------------------------
+# 7. KHỞI TẠO SESSION STATE & TẢI DỮ LIỆU ĐÃ LƯU CỦA USER
 # ----------------------------------------------------
 if "data_loaded_from_disk" not in st.session_state:
     saved_data = load_user_data()
@@ -441,7 +553,7 @@ if "inp_log_note" not in st.session_state:
     st.session_state.inp_log_note = ""
 
 # ----------------------------------------------------
-# 6. POP-UP MODAL THIẾT LẬP KHI KHỞI CHẠY
+# 8. POP-UP MODAL THIẾT LẬP KHI KHỞI CHẠY
 # ----------------------------------------------------
 @st.dialog("⚙️ Thiết Lập Khai Báo Tài Chính", width="large")
 def show_setup_modal():
@@ -551,17 +663,22 @@ st.session_state.monthly_history[current_month_str] = {
 }
 
 # ----------------------------------------------------
-# 7. HEADER & TOP METRICS CARDS
+# 9. HEADER & TOP METRICS CARDS
 # ----------------------------------------------------
-head_col1, head_col2 = st.columns([3, 1])
+head_col1, head_col2 = st.columns([2.5, 1.5])
 with head_col1:
     st.markdown('<div class="dash-header">💎 FinFlow Dashboard</div>', unsafe_allow_html=True)
-    st.caption("Hệ thống phân tích & Quản lý tài chính cá nhân thế hệ mới")
+    st.caption(f"Tài khoản: **{st.session_state.current_user.upper()}** | Hệ thống quản lý tài chính cá nhân")
 with head_col2:
-    if st.button("⚙️ Cấu hình lại thông tin", use_container_width=True):
-        st.session_state.configured = False
-        sync_data()
-        st.rerun()
+    btn_c1, btn_c2 = st.columns(2)
+    with btn_c1:
+        if st.button("⚙️ Cấu hình", use_container_width=True):
+            st.session_state.configured = False
+            sync_data()
+            st.rerun()
+    with btn_c2:
+        if st.button("🚪 Đăng xuất", use_container_width=True):
+            logout_user()
 
 st.write("")
 
@@ -625,7 +742,7 @@ if st.session_state.savings_goal > 0:
 st.write("")
 
 # ----------------------------------------------------
-# 8. THANH DI CHUYỂN TABS CHÍNH
+# 10. THANH DI CHUYỂN TABS CHÍNH
 # ----------------------------------------------------
 tab_stats, tab_history, tab_ai = st.tabs([
     "📊  Thống kê & Quản lý Chi tiêu", 
@@ -1113,7 +1230,7 @@ with tab_history:
 with tab_ai:
     st.write("")
     st.markdown("##### 🤖 FinBot AI - Cố vấn tài chính cá nhân")
-    st.caption("AI kết nối trực tiếp với dòng tiền của bạn để đưa ra phân tích chuyên sâu.")
+    st.caption(f"AI kết nối trực tiếp với dòng tiền của tài khoản {st.session_state.current_user.upper()} để phân tích.")
 
     q1, q2, q3 = st.columns(3)
     user_click_prompt = None
@@ -1145,7 +1262,7 @@ with tab_ai:
         exp_ratio = (grand_total_exp / st.session_state.income * 100) if st.session_state.income > 0 else 0
         
         if "phân tích" in prompt_lower or "thu chi" in prompt_lower:
-            ai_reply = f"""📊 **Báo cáo phân tích tài chính:**\n- **Tổng thu nhập:** `{st.session_state.income:,.0f} VNĐ`\n- **Tổng chi tiêu:** `{grand_total_exp:,.0f} VNĐ` (Chiếm **{exp_ratio:.1f}%** thu nhập)\n- **Số dư khả dụng:** `{remaining_balance:,.0f} VNĐ`\n\n💡 **Đánh giá:** {"⚠️ Tỷ lệ chi tiêu của bạn đang khá cao (>70%). Nên kiểm soát thêm các khoản phát sinh ngoài kế hoạch." if exp_ratio > 70 else "✅ Tỷ lệ chi tiêu của bạn rất lành mạnh và an toàn."}"""
+            ai_reply = f"""📊 **Báo cáo phân tích tài chính ({st.session_state.current_user}):**\n- **Tổng thu nhập:** `{st.session_state.income:,.0f} VNĐ`\n- **Tổng chi tiêu:** `{grand_total_exp:,.0f} VNĐ` (Chiếm **{exp_ratio:.1f}%** thu nhập)\n- **Số dư khả dụng:** `{remaining_balance:,.0f} VNĐ`\n\n💡 **Đánh giá:** {"⚠️ Tỷ lệ chi tiêu của bạn đang khá cao (>70%). Nên kiểm soát thêm các khoản phát sinh ngoài kế hoạch." if exp_ratio > 70 else "✅ Tỷ lệ chi tiêu của bạn rất lành mạnh và an toàn."}"""
         
         elif "tiết kiệm" in prompt_lower or "mục tiêu" in prompt_lower:
             ai_reply = f"""💡 **Chiến lược đạt mục tiêu tiết kiệm:**\n- **Mục tiêu tháng:** `{st.session_state.savings_goal:,.0f} VNĐ`\n- **Số dư hiện tại:** `{remaining_balance:,.0f} VNĐ`\n- **Tình trạng:** {'🎉 Bạn đã xuất sắc hoàn thành mục tiêu tích lũy!' if diff_goal >= 0 else f'⚠️ Còn thiếu **{abs(diff_goal):,.0f} VNĐ**. Hãy ưu tiên trích ngay 20% thu nhập đầu tháng vào quỹ tiết kiệm!'}"""
