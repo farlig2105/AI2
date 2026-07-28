@@ -16,7 +16,7 @@ st.set_page_config(
 # BỘ HÀM XỬ LÝ ĐỊNH DẠNG TIỀN TỆ & CSDL SESSION
 # ----------------------------------------------------
 def parse_amount(val) -> float:
-    """Chuyển đổi chuỗi nhập liệu thành số thực"""
+    """Chuyển đổi chuỗi nhập liệu hoặc số thành số thực"""
     if isinstance(val, (int, float)):
         return float(val)
     cleaned = "".join(c for c in str(val) if c.isdigit())
@@ -272,7 +272,7 @@ if "savings_goal" not in st.session_state:
 if "daily_logs" not in st.session_state:
     st.session_state.daily_logs = pd.DataFrame(columns=["Ngày", "Danh mục", "Số tiền", "Ghi chú"])
 
-# Dữ liệu lịch sử các tháng (Mặc định khởi tạo tháng trước để người dùng tham chiếu mẫu)
+# Dữ liệu lịch sử các tháng
 current_month_str = datetime.now().strftime("%Y-%m")
 if "monthly_history" not in st.session_state:
     st.session_state.monthly_history = {
@@ -499,7 +499,7 @@ if st.session_state.savings_goal > 0:
 st.write("")
 
 # ----------------------------------------------------
-# 6. THANH SUB-TABS (BỔ SUNG TAB LỊCH SỬ Ở GIỮA)
+# 6. THANH SUB-TABS
 # ----------------------------------------------------
 tab_stats, tab_history, tab_ai = st.tabs([
     "📊  Thống kê & Quản lý Chi tiêu", 
@@ -673,7 +673,7 @@ with tab_stats:
         st.info("Chưa có phát sinh chi tiêu nào được ghi nhận trong tháng này.")
 
 
-# ================= TAB 2: LỊCH SỬ & SO SÁNH CÁC THÁNG (MỚI) =================
+# ================= TAB 2: LỊCH SỬ & SO SÁNH CÁC THÁNG =================
 with tab_history:
     st.write("")
     st.markdown("##### 📅 Quản lý Lịch sử & Đối chiếu Chi tiêu các tháng")
@@ -691,8 +691,19 @@ with tab_history:
             "expenses": st.session_state.fixed_expenses.copy(),
             "savings_goal": 3000000.0
         })
-        
-        h_inc = st.number_input(f"Thu nhập tháng {hist_month} (VNĐ):", value=float(existing_data["income"]), step=500000.0)
+
+        # Định dạng tiền tệ chuỗi với dấu phẩy phân cách hàng nghìn (không có phần thập phân)
+        if f"h_inc_str_{hist_month}" not in st.session_state:
+            st.session_state[f"h_inc_str_{hist_month}"] = f"{int(existing_data['income']):,}"
+
+        st.text_input(
+            f"Thu nhập tháng {hist_month} (VNĐ):",
+            key=f"h_inc_str_{hist_month}",
+            on_change=format_money_callback,
+            args=(f"h_inc_str_{hist_month}",)
+        )
+        h_inc = parse_amount(st.session_state[f"h_inc_str_{hist_month}"])
+        st.caption(f"➔ Số tiền: **{h_inc:,.0f} VNĐ** *({num2vi_words(h_inc)})*")
         
         st.markdown("**Chi tiêu theo từng danh mục:**")
         h_exps = {}
@@ -701,7 +712,21 @@ with tab_history:
         for cat in st.session_state.fixed_expenses.keys():
             col_target = h_exp_cols[idx % 2]
             prev_val = float(existing_data["expenses"].get(cat, 0.0))
-            h_exps[cat] = col_target.number_input(f"{cat}:", value=prev_val, step=100000.0, key=f"hist_{hist_month}_{cat}")
+            
+            key_cat = f"hist_{hist_month}_{cat}"
+            if key_cat not in st.session_state:
+                st.session_state[key_cat] = f"{int(prev_val):,}"
+
+            with col_target:
+                st.text_input(
+                    f"{cat}:",
+                    key=key_cat,
+                    on_change=format_money_callback,
+                    args=(key_cat,)
+                )
+                cat_val = parse_amount(st.session_state[key_cat])
+                h_exps[cat] = cat_val
+                st.caption(f"➔ **{cat_val:,.0f} VNĐ**")
             idx += 1
             
         if st.button(f"💾 Lưu dữ liệu tháng {hist_month}", use_container_width=True):
