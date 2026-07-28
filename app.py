@@ -10,7 +10,14 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# 2. Tiêm CSS Tùy Biến Đỉnh Cao (Ultra-Modern Fintech UI)
+# Hàm bổ trợ: Chuyển đổi chuỗi nhập liệu thành số thực (Hỗ trợ xử lý dấu phẩy, dấu chấm)
+def parse_amount(val) -> float:
+    if isinstance(val, (int, float)):
+        return float(val)
+    cleaned = "".join(c for c in str(val) if c.isdigit())
+    return float(cleaned) if cleaned else 0.0
+
+# 2. Tiêm CSS Tùy Biến (Ultra-Modern Fintech UI)
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
@@ -91,7 +98,7 @@ st.markdown("""
     .sub-green { color: #34D399; }
     .sub-red { color: #F87171; }
 
-    /* ================= TÙY CHỈNH TABS ================= */
+    /* Custom Tabs */
     div[data-testid="stTabs"] {
         margin-top: 10px;
     }
@@ -160,7 +167,7 @@ st.markdown("""
         box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4) !important;
     }
 
-    /* Custom Form & Inputs */
+    /* Custom Inputs */
     div[data-baseweb="input"], div[data-baseweb="select"] {
         border-radius: 12px !important;
         background-color: rgba(15, 23, 42, 0.6) !important;
@@ -170,7 +177,7 @@ st.markdown("""
         border-color: #6366F1 !important;
     }
 
-    /* ================= FIX AVATAR & CHAT UI ================= */
+    /* Fix Avatar & Chat UI */
     div[data-testid="stChatMessage"] {
         background: rgba(30, 41, 59, 0.4) !important;
         border: 1px solid rgba(255, 255, 255, 0.08) !important;
@@ -200,12 +207,12 @@ if "income" not in st.session_state:
     st.session_state.income = 15000000.0
 if "fixed_expenses" not in st.session_state:
     st.session_state.fixed_expenses = {
-        "Tiền nhà": 3500000,
-        "Thực phẩm": 4000000,
-        "Điện nước & Mạng": 1000000,
-        "Giải trí": 1500000,
-        "Đi lại": 800000,
-        "Khác": 500000
+        "Tiền nhà": 3500000.0,
+        "Thực phẩm": 4000000.0,
+        "Điện nước & Mạng": 1000000.0,
+        "Giải trí": 1500000.0,
+        "Đi lại": 800000.0,
+        "Khác": 500000.0
     }
 if "savings_goal" not in st.session_state:
     st.session_state.savings_goal = 2960000.0
@@ -216,35 +223,57 @@ if "chat_history" not in st.session_state:
         {"role": "assistant", "content": "👋 **Xin chào! Tôi là FinBot AI** - Trợ lý tài chính thông minh của bạn.\n\nHãy bấm vào các gợi ý nhanh bên dưới hoặc đặt câu hỏi để tôi phân tích dòng tiền giúp bạn nhé!"}
     ]
 
-# 4. Pop-up Modal Thiết Lập
+# 4. Pop-up Modal Thiết Lập (Có định dạng dấu phẩy hàng nghìn)
 @st.dialog("⚙️ Thiết Lập Khai Báo Tài Chính", width="large")
 def show_setup_modal():
     if st.session_state.modal_step == 1:
         st.caption("Bước 1/2: Khai báo Thu nhập & Các khoản chi phí cố định ước tính")
         
-        income = st.number_input("💵 Thu nhập cố định hàng tháng (VNĐ):", min_value=0, value=int(st.session_state.income), step=500000)
+        income_raw = st.text_input(
+            "💵 Thu nhập cố định hàng tháng (VNĐ):", 
+            value=f"{int(st.session_state.income):,}"
+        )
+        income_val = parse_amount(income_raw)
+        st.caption(f"➔ Số tiền nhận diện: **{income_val:,.0f} VNĐ**")
         
         st.write("---")
         st.markdown("**📌 Chi tiêu dự kiến hàng tháng:**")
         col_a, col_b = st.columns(2)
         with col_a:
-            rent = st.number_input("Tiền nhà / Thuê phòng:", min_value=0, value=int(st.session_state.fixed_expenses.get("Tiền nhà", 3500000)), step=100000)
-            food = st.number_input("Thực phẩm / Ăn uống:", min_value=0, value=int(st.session_state.fixed_expenses.get("Thực phẩm", 4000000)), step=100000)
-            utilities = st.number_input("Điện, nước, Internet:", min_value=0, value=int(st.session_state.fixed_expenses.get("Điện nước & Mạng", 1000000)), step=100000)
+            rent_raw = st.text_input("Tiền nhà / Thuê phòng:", value=f"{int(st.session_state.fixed_expenses.get('Tiền nhà', 3500000)):,}")
+            rent_val = parse_amount(rent_raw)
+            st.caption(f"➔ **{rent_val:,.0f} VNĐ**")
+
+            food_raw = st.text_input("Thực phẩm / Ăn uống:", value=f"{int(st.session_state.fixed_expenses.get('Thực phẩm', 4000000)):,}")
+            food_val = parse_amount(food_raw)
+            st.caption(f"➔ **{food_val:,.0f} VNĐ**")
+
+            util_raw = st.text_input("Điện, nước, Internet:", value=f"{int(st.session_state.fixed_expenses.get('Điện nước & Mạng', 1000000)):,}")
+            util_val = parse_amount(util_raw)
+            st.caption(f"➔ **{util_val:,.0f} VNĐ**")
+
         with col_b:
-            entertainment = st.number_input("Giải trí / Giao lưu:", min_value=0, value=int(st.session_state.fixed_expenses.get("Giải trí", 1500000)), step=100000)
-            transport = st.number_input("Đi lại / Xăng xe:", min_value=0, value=int(st.session_state.fixed_expenses.get("Đi lại", 800000)), step=100000)
-            other = st.number_input("Khoản khác:", min_value=0, value=int(st.session_state.fixed_expenses.get("Khác", 500000)), step=100000)
+            ent_raw = st.text_input("Giải trí / Giao lưu:", value=f"{int(st.session_state.fixed_expenses.get('Giải trí', 1500000)):,}")
+            ent_val = parse_amount(ent_raw)
+            st.caption(f"➔ **{ent_val:,.0f} VNĐ**")
+
+            trans_raw = st.text_input("Đi lại / Xăng xe:", value=f"{int(st.session_state.fixed_expenses.get('Đi lại', 800000)):,}")
+            trans_val = parse_amount(trans_raw)
+            st.caption(f"➔ **{trans_val:,.0f} VNĐ**")
+
+            other_raw = st.text_input("Khoản khác:", value=f"{int(st.session_state.fixed_expenses.get('Khác', 500000)):,}")
+            other_val = parse_amount(other_raw)
+            st.caption(f"➔ **{other_val:,.0f} VNĐ**")
 
         if st.button("Tiếp theo: Đặt mục tiêu tiết kiệm ➡️", use_container_width=True):
-            st.session_state.income = float(income)
+            st.session_state.income = income_val
             st.session_state.fixed_expenses = {
-                "Tiền nhà": rent,
-                "Thực phẩm": food,
-                "Điện nước & Mạng": utilities,
-                "Giải trí": entertainment,
-                "Đi lại": transport,
-                "Khác": other
+                "Tiền nhà": rent_val,
+                "Thực phẩm": food_val,
+                "Điện nước & Mạng": util_val,
+                "Giải trí": ent_val,
+                "Đi lại": trans_val,
+                "Khác": other_val
             }
             st.session_state.modal_step = 2
             st.rerun()
@@ -256,7 +285,12 @@ def show_setup_modal():
 
         st.info(f"💡 Dựa trên thu nhập ({st.session_state.income:,.0f} VNĐ) và tổng chi cố định ({total_exp:,.0f} VNĐ), khả năng tiết kiệm tối đa của bạn là **{max_possible:,.0f} VNĐ**.")
 
-        goal = st.number_input("🎯 Mục tiêu tiết kiệm tháng này (VNĐ):", min_value=0.0, value=float(max_possible * 0.8), step=500000.0)
+        goal_raw = st.text_input(
+            "🎯 Mục tiêu tiết kiệm tháng này (VNĐ):", 
+            value=f"{int(max_possible * 0.8):,}"
+        )
+        goal_val = parse_amount(goal_raw)
+        st.caption(f"➔ Số tiền nhận diện: **{goal_val:,.0f} VNĐ**")
 
         col1, col2 = st.columns(2)
         with col1:
@@ -265,7 +299,7 @@ def show_setup_modal():
                 st.rerun()
         with col2:
             if st.button("Hoàn thành & Vào Dashboard 🚀", use_container_width=True):
-                st.session_state.savings_goal = goal
+                st.session_state.savings_goal = goal_val
                 st.session_state.configured = True
                 st.session_state.modal_step = 1
                 st.rerun()
@@ -406,7 +440,9 @@ with tab_stats:
         with st.form("log_form", clear_on_submit=True):
             log_date = st.date_input("Ngày giao dịch")
             log_cat = st.selectbox("Danh mục", list(st.session_state.fixed_expenses.keys()))
-            log_amt = st.number_input("Số tiền (VNĐ)", min_value=0, step=50000)
+            log_amt_raw = st.text_input("Số tiền (VNĐ)", value="50,000", placeholder="VD: 100,000")
+            log_amt = parse_amount(log_amt_raw)
+            st.caption(f"➔ Số tiền: **{log_amt:,.0f} VNĐ**")
             log_note = st.text_input("Ghi chú khoản chi")
             
             submitted = st.form_submit_button("➕ Thêm khoản chi", use_container_width=True)
@@ -435,7 +471,7 @@ with tab_ai:
     st.markdown("##### 🤖 FinBot AI - Cố vấn tài chính cá nhân")
     st.caption("AI kết nối trực tiếp với dòng tiền của bạn để đưa ra phân tích chuyên sâu.")
 
-    # Nút bấm hỏi nhanh (Quick Prompts)
+    # Nút bấm hỏi nhanh
     q1, q2, q3 = st.columns(3)
     user_click_prompt = None
     with q1:
@@ -450,16 +486,15 @@ with tab_ai:
 
     st.write("")
 
-    # Cửa sổ Chat rộng rãi
+    # Cửa sổ Chat
     chat_container = st.container(height=420)
     with chat_container:
         for message in st.session_state.chat_history:
-            # GÁN AVATAR EMOJI RÕ RÀNG ĐỂ TRÁNH LỖI VỠ HÌNH
             avatar_icon = "🤖" if message["role"] == "assistant" else "👤"
             with st.chat_message(message["role"], avatar=avatar_icon):
                 st.markdown(message["content"])
 
-    # Xử lý nhập liệu từ bàn phím hoặc nút bấm hỏi nhanh
+    # Xử lý nhập liệu từ bàn phím hoặc nút bấm
     user_prompt = st.chat_input("Nhập câu hỏi cho AI...") or user_click_prompt
 
     if user_prompt:
