@@ -62,7 +62,7 @@ def logout_user():
     """Xóa bộ nhớ đệm session state và đăng xuất."""
     keys_to_clear = [
         "authenticated", "current_user", "data_loaded_from_disk", 
-        "configured", "income", "fixed_expenses", "savings_goal", 
+        "configured", "show_config_modal", "income", "fixed_expenses", "savings_goal", 
         "daily_logs", "monthly_history", "chat_history", "modal_step",
         "inp_income", "inp_rent", "inp_food", "inp_util", "inp_ent", 
         "inp_trans", "inp_other", "inp_log_amt", "inp_log_note", "inp_goal",
@@ -97,7 +97,7 @@ def save_user_data():
         daily_logs_list = st.session_state.daily_logs.to_dict(orient="records")
 
     data_to_save = {
-        "configured": st.session_state.get("configured", False),
+        "configured": True,
         "income": st.session_state.get("income", 15000000.0),
         "fixed_expenses": st.session_state.get("fixed_expenses", {}),
         "savings_goal": st.session_state.get("savings_goal", 0.0),
@@ -263,74 +263,6 @@ st.markdown("""
             --badge-gray-text: #CBD5E1;
             --badge-gray-border: rgba(100, 116, 139, 0.4);
         }
-    }
-
-    [data-theme="light"], .stApp[data-theme="light"], body[data-theme="light"] {
-        --bg-gradient: linear-gradient(135deg, #F8FAFC 0%, #EEF2FF 50%, #E2E8F0 100%) !important;
-        --text-primary: #0F172A !important;
-        --text-secondary: #475569 !important;
-        --card-bg: rgba(255, 255, 255, 0.9) !important;
-        --card-hover-bg: #FFFFFF !important;
-        --card-border: rgba(203, 213, 225, 0.8) !important;
-        --card-shadow: 0 10px 25px -5px rgba(148, 163, 184, 0.2) !important;
-        --input-bg: #FFFFFF !important;
-        --input-border: #CBD5E1 !important;
-        --input-text: #0F172A !important;
-        --tab-bg: #E2E8F0 !important;
-        --tab-text: #475569 !important;
-        --table-bg: #FFFFFF !important;
-        --table-text: #0F172A !important;
-        --table-border: #E2E8F0 !important;
-        --table-header-bg: #F1F5F9 !important;
-        --table-header-text: #0F172A !important;
-        --table-row-hover: rgba(99, 102, 241, 0.08) !important;
-        --dialog-bg: #FFFFFF !important;
-
-        --badge-red-bg: #FEE2E2 !important;
-        --badge-red-text: #DC2626 !important;
-        --badge-red-border: #FCA5A5 !important;
-
-        --badge-green-bg: #D1FAE5 !important;
-        --badge-green-text: #059669 !important;
-        --badge-green-border: #6EE7B7 !important;
-
-        --badge-gray-bg: #F1F5F9 !important;
-        --badge-gray-text: #475569 !important;
-        --badge-gray-border: #CBD5E1 !important;
-    }
-
-    [data-theme="dark"], .stApp[data-theme="dark"], body[data-theme="dark"] {
-        --bg-gradient: radial-gradient(circle at 50% 0%, #1E1B4B 0%, #0F172A 50%, #020617 100%) !important;
-        --text-primary: #F8FAFC !important;
-        --text-secondary: #CBD5E1 !important;
-        --card-bg: rgba(30, 41, 59, 0.6) !important;
-        --card-hover-bg: rgba(30, 41, 59, 0.85) !important;
-        --card-border: rgba(255, 255, 255, 0.12) !important;
-        --card-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5) !important;
-        --input-bg: rgba(15, 23, 42, 0.85) !important;
-        --input-border: rgba(255, 255, 255, 0.2) !important;
-        --input-text: #FFFFFF !important;
-        --tab-bg: rgba(15, 23, 42, 0.6) !important;
-        --tab-text: #CBD5E1 !important;
-        --table-bg: #0F172A !important;
-        --table-text: #F8FAFC !important;
-        --table-border: rgba(255, 255, 255, 0.15) !important;
-        --table-header-bg: #1E293B !important;
-        --table-header-text: #E2E8F0 !important;
-        --table-row-hover: rgba(99, 102, 241, 0.2) !important;
-        --dialog-bg: rgba(15, 23, 42, 0.95) !important;
-
-        --badge-red-bg: rgba(239, 68, 68, 0.2) !important;
-        --badge-red-text: #FCA5A5 !important;
-        --badge-red-border: rgba(239, 68, 68, 0.4) !important;
-
-        --badge-green-bg: rgba(16, 185, 129, 0.2) !important;
-        --badge-green-text: #6EE7B7 !important;
-        --badge-green-border: rgba(16, 185, 129, 0.4) !important;
-
-        --badge-gray-bg: rgba(100, 116, 139, 0.2) !important;
-        --badge-gray-text: #CBD5E1 !important;
-        --badge-gray-border: rgba(100, 116, 139, 0.4) !important;
     }
 
     .stApp {
@@ -664,7 +596,7 @@ if not st.session_state.get("authenticated", False):
 if "data_loaded_from_disk" not in st.session_state:
     saved_data = load_user_data()
     if saved_data:
-        st.session_state.configured = saved_data.get("configured", False)
+        st.session_state.configured = True
         st.session_state.income = float(saved_data.get("income", 15000000.0))
         st.session_state.fixed_expenses = saved_data.get("fixed_expenses", {
             "Tiền nhà": 3500000.0, "Thực phẩm": 4000000.0, "Điện nước & Mạng": 1000000.0,
@@ -683,10 +615,17 @@ if "data_loaded_from_disk" not in st.session_state:
             st.session_state.daily_logs = pd.DataFrame(columns=["Ngày", "Danh mục", "Số tiền", "Ghi chú"])
             
         st.session_state.monthly_history = saved_data.get("monthly_history", {})
+        st.session_state.show_config_modal = False
+    else:
+        st.session_state.configured = False
+        st.session_state.show_config_modal = True
+
     st.session_state.data_loaded_from_disk = True
 
 if "configured" not in st.session_state:
-    st.session_state.configured = False
+    st.session_state.configured = True
+if "show_config_modal" not in st.session_state:
+    st.session_state.show_config_modal = False
 if "modal_step" not in st.session_state:
     st.session_state.modal_step = 1
 if "income" not in st.session_state:
@@ -741,7 +680,7 @@ if "inp_log_note" not in st.session_state:
     st.session_state.inp_log_note = ""
 
 # ----------------------------------------------------
-# 8. POP-UP MODAL THIẾT LẬP KHI KHỞI CHẠY
+# 8. POP-UP MODAL THIẾT LẬP KHI KHỞI CHẠY (CHỈ HIỂN THỊ KHI ĐƯỢC YÊU CẦU)
 # ----------------------------------------------------
 @st.dialog("⚙️ Thiết Lập Khai Báo Tài Chính", width="large")
 def show_setup_modal():
@@ -786,21 +725,27 @@ def show_setup_modal():
             other_val = parse_amount(st.session_state.inp_other)
             st.caption(f"➔ Số tiền: **{other_val:,.0f} VNĐ** *({num2vi_words(other_val)})*")
 
-        if st.button("Tiếp theo: Đặt mục tiêu tiết kiệm ➡️", use_container_width=True):
-            st.session_state.income = inc_val
-            st.session_state.fixed_expenses = {
-                "Tiền nhà": rent_val,
-                "Thực phẩm": food_val,
-                "Điện nước & Mạng": util_val,
-                "Giải trí": ent_val,
-                "Đi lại": trans_val,
-                "Khác": other_val
-            }
-            total_exp = sum(st.session_state.fixed_expenses.values())
-            max_possible = max(0.0, st.session_state.income - total_exp)
-            st.session_state.inp_goal = f"{int(max_possible * 0.8):,}"
-            st.session_state.modal_step = 2
-            st.rerun()
+        col_next, col_cancel = st.columns([2, 1])
+        with col_next:
+            if st.button("Tiếp theo: Đặt mục tiêu tiết kiệm ➡️", use_container_width=True):
+                st.session_state.income = inc_val
+                st.session_state.fixed_expenses = {
+                    "Tiền nhà": rent_val,
+                    "Thực phẩm": food_val,
+                    "Điện nước & Mạng": util_val,
+                    "Giải trí": ent_val,
+                    "Đi lại": trans_val,
+                    "Khác": other_val
+                }
+                total_exp = sum(st.session_state.fixed_expenses.values())
+                max_possible = max(0.0, st.session_state.income - total_exp)
+                st.session_state.inp_goal = f"{int(max_possible * 0.8):,}"
+                st.session_state.modal_step = 2
+                st.rerun()
+        with col_cancel:
+            if st.button("✖️ Đóng", use_container_width=True):
+                st.session_state.show_config_modal = False
+                st.rerun()
 
     elif st.session_state.modal_step == 2:
         st.caption("Bước 2/2: Đặt mục tiêu tích lũy tháng")
@@ -830,11 +775,13 @@ def show_setup_modal():
             if st.button("Hoàn thành & Vào Dashboard 🚀", use_container_width=True):
                 st.session_state.savings_goal = goal_val
                 st.session_state.configured = True
+                st.session_state.show_config_modal = False
                 st.session_state.modal_step = 1
                 sync_data()
                 st.rerun()
 
-if not st.session_state.configured:
+# Chỉ gọi hiển thị modal khi người dùng thực sự kích hoạt
+if st.session_state.get("show_config_modal", False):
     show_setup_modal()
 
 # Tự động đồng bộ tháng hiện tại vào CSDL Lịch sử
@@ -861,8 +808,7 @@ with head_col2:
     btn_c1, btn_c2 = st.columns(2)
     with btn_c1:
         if st.button("⚙️ Cấu hình", use_container_width=True):
-            st.session_state.configured = False
-            sync_data()
+            st.session_state.show_config_modal = True
             st.rerun()
     with btn_c2:
         if st.button("🚪 Đăng xuất", use_container_width=True):
