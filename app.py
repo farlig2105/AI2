@@ -186,6 +186,109 @@ st.markdown("""
         color: #F8FAFC;
     }
 
+    /* ĐỊNH DẠNG RIÊNG CHO FORM ĐĂNG NHẬP / ĐĂNG KÝ */
+    .auth-title {
+        background: linear-gradient(135deg, #818CF8 0%, #C084FC 50%, #34D399 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 800;
+        font-size: 3.4rem !important;
+        letter-spacing: -0.5px;
+        margin-bottom: 8px;
+    }
+
+    .auth-sub {
+        color: #CBD5E1;
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 20px;
+    }
+
+    /* Nhãn tên ô nhập liệu (Text Input Label) */
+    div[data-testid="stTextInput"] label {
+        font-size: 1.08rem !important;
+        font-weight: 700 !important;
+        color: #F1F5F9 !important;
+        margin-bottom: 8px !important;
+    }
+
+    /* Khung nhập liệu (Input Field) */
+    div[data-baseweb="input"] input {
+        font-size: 1.1rem !important;
+        padding: 12px 14px !important;
+        color: #FFFFFF !important;
+    }
+
+    div[data-baseweb="input"] {
+        border-radius: 14px !important;
+        background-color: rgba(15, 23, 42, 0.7) !important;
+        border: 1px solid rgba(255, 255, 255, 0.18) !important;
+        transition: all 0.25s ease !important;
+    }
+
+    div[data-baseweb="input"]:focus-within {
+        border-color: #818CF8 !important;
+        box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.3) !important;
+    }
+
+    /* Tab Đăng nhập / Đăng ký */
+    div[data-baseweb="tab-list"] {
+        background: rgba(15, 23, 42, 0.6) !important;
+        backdrop-filter: blur(12px) !important;
+        padding: 6px !important;
+        border-radius: 16px !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        gap: 8px !important;
+        display: flex !important;
+        width: 100% !important;
+    }
+
+    button[data-baseweb="tab"] {
+        flex: 1 !important;
+        height: 56px !important;
+        border-radius: 12px !important;
+        border: none !important;
+        background: transparent !important;
+        color: #CBD5E1 !important;
+        font-weight: 700 !important;
+        font-size: 1.15rem !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    button[data-baseweb="tab"]:hover {
+        color: #F8FAFC !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+    }
+
+    button[data-baseweb="tab"][aria-selected="true"] {
+        background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%) !important;
+        color: #FFFFFF !important;
+        box-shadow: 0 8px 20px -4px rgba(99, 102, 241, 0.5) !important;
+    }
+
+    div[data-baseweb="tab-highlight"], div[data-baseweb="tab-border"] {
+        display: none !important;
+    }
+
+    /* Nút bấm (Button) */
+    .stButton > button {
+        border-radius: 14px !important;
+        background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%) !important;
+        color: white !important;
+        border: none !important;
+        font-weight: 700 !important;
+        font-size: 1.1rem !important;
+        padding: 0.8rem 1.5rem !important;
+        transition: all 0.25s ease !important;
+    }
+    .stButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 22px rgba(99, 102, 241, 0.45) !important;
+    }
+
     div[data-testid="stDataFrame"] {
         background: rgba(15, 23, 42, 0.65) !important;
         border: 1px solid rgba(255, 255, 255, 0.12) !important;
@@ -257,72 +360,6 @@ st.markdown("""
     }
     .sub-green { color: #34D399; }
     .sub-red { color: #F87171; }
-
-    div[data-testid="stTabs"] {
-        margin-top: 10px;
-    }
-    
-    div[data-baseweb="tab-list"] {
-        background: rgba(15, 23, 42, 0.6) !important;
-        backdrop-filter: blur(12px) !important;
-        padding: 6px !important;
-        border-radius: 16px !important;
-        border: 1px solid rgba(255, 255, 255, 0.08) !important;
-        gap: 8px !important;
-        display: flex !important;
-        width: 100% !important;
-    }
-
-    button[data-baseweb="tab"] {
-        flex: 1 !important;
-        height: 52px !important;
-        border-radius: 12px !important;
-        border: none !important;
-        background: transparent !important;
-        color: #CBD5E1 !important;
-        font-weight: 700 !important;
-        font-size: 1.05rem !important;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-    }
-
-    button[data-baseweb="tab"]:hover {
-        color: #F8FAFC !important;
-        background: rgba(255, 255, 255, 0.05) !important;
-    }
-
-    button[data-baseweb="tab"][aria-selected="true"] {
-        background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%) !important;
-        color: #FFFFFF !important;
-        box-shadow: 0 8px 20px -4px rgba(99, 102, 241, 0.5) !important;
-    }
-
-    div[data-baseweb="tab-highlight"], div[data-baseweb="tab-border"] {
-        display: none !important;
-    }
-
-    .stButton > button {
-        border-radius: 12px !important;
-        background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%) !important;
-        color: white !important;
-        border: none !important;
-        font-weight: 700 !important;
-        font-size: 1rem !important;
-        padding: 0.65rem 1.35rem !important;
-        transition: all 0.25s ease !important;
-    }
-    .stButton > button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4) !important;
-    }
-
-    div[data-baseweb="input"], div[data-baseweb="select"] {
-        border-radius: 12px !important;
-        background-color: rgba(15, 23, 42, 0.6) !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    }
 
     .custom-table-container {
         border-radius: 18px;
@@ -407,17 +444,6 @@ st.markdown("""
         justify-content: center;
         font-size: 1.2rem;
     }
-    
-    .auth-container {
-        max-width: 460px;
-        margin: 60px auto;
-        padding: 35px;
-        background: rgba(15, 23, 42, 0.75);
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        border-radius: 24px;
-        backdrop-filter: blur(20px);
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
-    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -425,10 +451,11 @@ st.markdown("""
 # 6. MÀN HÌNH ĐĂNG NHẬP / ĐĂNG KÝ
 # ----------------------------------------------------
 if not st.session_state.get("authenticated", False):
-    col_l1, col_l2, col_l3 = st.columns([1, 1.3, 1])
+    st.write("")
+    st.write("")
+    col_l1, col_l2, col_l3 = st.columns([1, 1.8, 1])
     with col_l2:
-        st.write("")
-        st.markdown('<div style="text-align: center; margin-bottom: 20px;"><span class="dash-header">💎 FinFlow</span><p style="color: #CBD5E1; font-weight: 600;">Hệ thống Quản lý Tài chính Cá nhân</p></div>', unsafe_allow_html=True)
+        st.markdown('<div style="text-align: center; margin-bottom: 25px;"><div class="auth-title">💎 FinFlow</div><p class="auth-sub">Hệ thống Quản lý Tài chính Cá nhân Thông minh</p></div>', unsafe_allow_html=True)
         
         tab_login, tab_register = st.tabs(["🔑 Đăng nhập", "📝 Đăng ký"])
         users = load_users()
@@ -437,7 +464,7 @@ if not st.session_state.get("authenticated", False):
             st.write("")
             login_username = st.text_input("Tên đăng nhập / Email", key="login_usr").strip().lower()
             login_password = st.text_input("Mật khẩu", type="password", key="login_pwd")
-            
+            st.write("")
             if st.button("Đăng nhập vào hệ thống 🚀", use_container_width=True):
                 if not login_username or not login_password:
                     st.error("Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.")
@@ -454,7 +481,7 @@ if not st.session_state.get("authenticated", False):
             reg_username = st.text_input("Tên đăng nhập mới", key="reg_usr").strip().lower()
             reg_password = st.text_input("Mật khẩu", type="password", key="reg_pwd")
             reg_confirm = st.text_input("Xác nhận mật khẩu", type="password", key="reg_conf")
-
+            st.write("")
             if st.button("Tạo tài khoản mới ✨", use_container_width=True):
                 if not reg_username or not reg_password:
                     st.error("Vui lòng điền đầy đủ thông tin đăng ký.")
@@ -929,7 +956,6 @@ with tab_stats:
                         st.session_state.daily_logs.index[selected_rows]
                     ).reset_index(drop=True)
                     
-                    # Làm sạch bộ nhớ bảng chọn
                     if "daily_logs_table_grid" in st.session_state:
                         del st.session_state["daily_logs_table_grid"]
                         
@@ -955,7 +981,6 @@ with tab_stats:
                     if indices_to_drop:
                         st.session_state.daily_logs = st.session_state.daily_logs.drop(indices_to_drop).reset_index(drop=True)
                     
-                    # ĐẶC BIỆT NGHỆ THUẬT: Xóa sạch bộ nhớ đệm widget chọn trước khi rerun để tránh lỗi!
                     st.session_state.multiselect_delete_logs = []
                     
                     sync_data()
