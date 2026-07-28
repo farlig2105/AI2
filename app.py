@@ -167,7 +167,7 @@ def add_expense_action(log_date, log_cat, amt, log_note):
     sync_data()
 
 def confirm_emergency_action():
-    """Callback xác nhận chi: Thêm vào bảng, reset dữ liệu và làm mới trang."""
+    """Callback xác nhận chi: Thêm vào bảng, reset dữ liệu và tự động làm mới trang."""
     pending = st.session_state.get("pending_expense", {})
     if pending:
         add_expense_action(
@@ -179,13 +179,11 @@ def confirm_emergency_action():
         st.session_state.show_confirm_dialog = False
         st.session_state.pending_expense = None
         st.session_state.expense_added_msg = True
-        st.rerun()
 
 def cancel_emergency_action():
     """Callback hủy bỏ: Đóng hộp thoại và GIỮ NGUYÊN toàn bộ thông tin đã nhập."""
     st.session_state.show_confirm_dialog = False
     st.session_state.pending_expense = None
-    st.rerun()
 
 def handle_add_expense_click():
     """Callback kiểm tra và xử lý khi bấm nút Thêm khoản chi."""
@@ -976,7 +974,7 @@ with m4:
 
 st.write("")
 
-# THÔNG BÁO CẢNH BÁO KHI SỐ DƯ CHẠM NGUỠNG KHẨN CẤP
+# THÔNG BÁO CẢNH BÁO KHI SỐ DƯ CHẠM NGƯỠNG KHẨN CẤP
 if remaining_balance <= emergency_fund_val:
     st.error(
         f"🚨 **CẢNH BÁO TÀI CHÍNH NGUY HIỂM:** Số dư hiện tại của bạn (**{remaining_balance:,.0f} VNĐ**) "
