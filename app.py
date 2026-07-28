@@ -10,12 +10,44 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Hàm bổ trợ: Chuyển đổi chuỗi nhập liệu thành số thực (Hỗ trợ xử lý dấu phẩy, dấu chấm)
+# ----------------------------------------------------
+# BỘ HÀM XỬ LÝ ĐỊNH DẠNG TIỀN TỆ THÔNG MINH
+# ----------------------------------------------------
 def parse_amount(val) -> float:
+    """Chuyển đổi chuỗi nhập liệu thành số thực"""
     if isinstance(val, (int, float)):
         return float(val)
     cleaned = "".join(c for c in str(val) if c.isdigit())
     return float(cleaned) if cleaned else 0.0
+
+def format_money_callback(key_name):
+    """Callback tự động thêm dấu phẩy hàng nghìn khi người dùng nhập số"""
+    raw_val = st.session_state.get(key_name, "")
+    digits = "".join(c for c in str(raw_val) if c.isdigit())
+    if digits:
+        st.session_state[key_name] = f"{int(digits):,}"
+    else:
+        st.session_state[key_name] = "0"
+
+def num2vi_words(val) -> str:
+    """Đọc số tiền dạng viết tắt trực quan (Nghìn / Triệu / Tỷ)"""
+    n = int(parse_amount(val))
+    if n <= 0:
+        return "0 VNĐ"
+    if n >= 1_000_000_000:
+        ty = n // 1_000_000_000
+        trieu = (n % 1_000_000_000) // 1_000_000
+        return f"{ty:,} tỷ {trieu} triệu VNĐ" if trieu > 0 else f"{ty:,} tỷ VNĐ"
+    elif n >= 1_000_000:
+        trieu = n // 1_000_000
+        nghin = (n % 1_000_000) // 1_000
+        return f"{trieu} triệu {nghin} nghìn VNĐ" if nghin > 0 else f"{trieu} triệu VNĐ"
+    elif n >= 1_000:
+        nghin = n // 1_000
+        dong = n % 1_000
+        return f"{nghin} nghìn {dong} VNĐ" if dong > 0 else f"{nghin} nghìn VNĐ"
+    else:
+        return f"{n} VNĐ"
 
 # 2. Tiêm CSS Tùy Biến (Ultra-Modern Fintech UI)
 st.markdown("""
@@ -223,50 +255,70 @@ if "chat_history" not in st.session_state:
         {"role": "assistant", "content": "👋 **Xin chào! Tôi là FinBot AI** - Trợ lý tài chính thông minh của bạn.\n\nHãy bấm vào các gợi ý nhanh bên dưới hoặc đặt câu hỏi để tôi phân tích dòng tiền giúp bạn nhé!"}
     ]
 
-# 4. Pop-up Modal Thiết Lập (Có định dạng dấu phẩy hàng nghìn)
+# Khởi tạo keys nhập liệu cho Modal
+if "inp_income" not in st.session_state:
+    st.session_state.inp_income = f"{int(st.session_state.income):,}"
+if "inp_rent" not in st.session_state:
+    st.session_state.inp_rent = f"{int(st.session_state.fixed_expenses['Tiền nhà']):,}"
+if "inp_food" not in st.session_state:
+    st.session_state.inp_food = f"{int(st.session_state.fixed_expenses['Thực phẩm']):,}"
+if "inp_util" not in st.session_state:
+    st.session_state.inp_util = f"{int(st.session_state.fixed_expenses['Điện nước & Mạng']):,}"
+if "inp_ent" not in st.session_state:
+    st.session_state.inp_ent = f"{int(st.session_state.fixed_expenses['Giải trí']):,}"
+if "inp_trans" not in st.session_state:
+    st.session_state.inp_trans = f"{int(st.session_state.fixed_expenses['Đi lại']):,}"
+if "inp_other" not in st.session_state:
+    st.session_state.inp_other = f"{int(st.session_state.fixed_expenses['Khác']):,}"
+if "inp_log_amt" not in st.session_state:
+    st.session_state.inp_log_amt = "500,000"
+
+# 4. Pop-up Modal Thiết Lập
 @st.dialog("⚙️ Thiết Lập Khai Báo Tài Chính", width="large")
 def show_setup_modal():
     if st.session_state.modal_step == 1:
         st.caption("Bước 1/2: Khai báo Thu nhập & Các khoản chi phí cố định ước tính")
         
-        income_raw = st.text_input(
+        st.text_input(
             "💵 Thu nhập cố định hàng tháng (VNĐ):", 
-            value=f"{int(st.session_state.income):,}"
+            key="inp_income",
+            on_change=format_money_callback,
+            args=("inp_income",)
         )
-        income_val = parse_amount(income_raw)
-        st.caption(f"➔ Số tiền nhận diện: **{income_val:,.0f} VNĐ**")
+        inc_val = parse_amount(st.session_state.inp_income)
+        st.caption(f"➔ Số tiền: **{inc_val:,.0f} VNĐ** *({num2vi_words(inc_val)})*")
         
         st.write("---")
         st.markdown("**📌 Chi tiêu dự kiến hàng tháng:**")
         col_a, col_b = st.columns(2)
         with col_a:
-            rent_raw = st.text_input("Tiền nhà / Thuê phòng:", value=f"{int(st.session_state.fixed_expenses.get('Tiền nhà', 3500000)):,}")
-            rent_val = parse_amount(rent_raw)
-            st.caption(f"➔ **{rent_val:,.0f} VNĐ**")
+            st.text_input("Tiền nhà / Thuê phòng:", key="inp_rent", on_change=format_money_callback, args=("inp_rent",))
+            rent_val = parse_amount(st.session_state.inp_rent)
+            st.caption(f"➔ Số tiền: **{rent_val:,.0f} VNĐ** *({num2vi_words(rent_val)})*")
 
-            food_raw = st.text_input("Thực phẩm / Ăn uống:", value=f"{int(st.session_state.fixed_expenses.get('Thực phẩm', 4000000)):,}")
-            food_val = parse_amount(food_raw)
-            st.caption(f"➔ **{food_val:,.0f} VNĐ**")
+            st.text_input("Thực phẩm / Ăn uống:", key="inp_food", on_change=format_money_callback, args=("inp_food",))
+            food_val = parse_amount(st.session_state.inp_food)
+            st.caption(f"➔ Số tiền: **{food_val:,.0f} VNĐ** *({num2vi_words(food_val)})*")
 
-            util_raw = st.text_input("Điện, nước, Internet:", value=f"{int(st.session_state.fixed_expenses.get('Điện nước & Mạng', 1000000)):,}")
-            util_val = parse_amount(util_raw)
-            st.caption(f"➔ **{util_val:,.0f} VNĐ**")
+            st.text_input("Điện, nước, Internet:", key="inp_util", on_change=format_money_callback, args=("inp_util",))
+            util_val = parse_amount(st.session_state.inp_util)
+            st.caption(f"➔ Số tiền: **{util_val:,.0f} VNĐ** *({num2vi_words(util_val)})*")
 
         with col_b:
-            ent_raw = st.text_input("Giải trí / Giao lưu:", value=f"{int(st.session_state.fixed_expenses.get('Giải trí', 1500000)):,}")
-            ent_val = parse_amount(ent_raw)
-            st.caption(f"➔ **{ent_val:,.0f} VNĐ**")
+            st.text_input("Giải trí / Giao lưu:", key="inp_ent", on_change=format_money_callback, args=("inp_ent",))
+            ent_val = parse_amount(st.session_state.inp_ent)
+            st.caption(f"➔ Số tiền: **{ent_val:,.0f} VNĐ** *({num2vi_words(ent_val)})*")
 
-            trans_raw = st.text_input("Đi lại / Xăng xe:", value=f"{int(st.session_state.fixed_expenses.get('Đi lại', 800000)):,}")
-            trans_val = parse_amount(trans_raw)
-            st.caption(f"➔ **{trans_val:,.0f} VNĐ**")
+            st.text_input("Đi lại / Xăng xe:", key="inp_trans", on_change=format_money_callback, args=("inp_trans",))
+            trans_val = parse_amount(st.session_state.inp_trans)
+            st.caption(f"➔ Số tiền: **{trans_val:,.0f} VNĐ** *({num2vi_words(trans_val)})*")
 
-            other_raw = st.text_input("Khoản khác:", value=f"{int(st.session_state.fixed_expenses.get('Khác', 500000)):,}")
-            other_val = parse_amount(other_raw)
-            st.caption(f"➔ **{other_val:,.0f} VNĐ**")
+            st.text_input("Khoản khác:", key="inp_other", on_change=format_money_callback, args=("inp_other",))
+            other_val = parse_amount(st.session_state.inp_other)
+            st.caption(f"➔ Số tiền: **{other_val:,.0f} VNĐ** *({num2vi_words(other_val)})*")
 
         if st.button("Tiếp theo: Đặt mục tiêu tiết kiệm ➡️", use_container_width=True):
-            st.session_state.income = income_val
+            st.session_state.income = inc_val
             st.session_state.fixed_expenses = {
                 "Tiền nhà": rent_val,
                 "Thực phẩm": food_val,
@@ -275,6 +327,9 @@ def show_setup_modal():
                 "Đi lại": trans_val,
                 "Khác": other_val
             }
+            total_exp = sum(st.session_state.fixed_expenses.values())
+            max_possible = max(0.0, st.session_state.income - total_exp)
+            st.session_state.inp_goal = f"{int(max_possible * 0.8):,}"
             st.session_state.modal_step = 2
             st.rerun()
 
@@ -285,12 +340,17 @@ def show_setup_modal():
 
         st.info(f"💡 Dựa trên thu nhập ({st.session_state.income:,.0f} VNĐ) và tổng chi cố định ({total_exp:,.0f} VNĐ), khả năng tiết kiệm tối đa của bạn là **{max_possible:,.0f} VNĐ**.")
 
-        goal_raw = st.text_input(
+        if "inp_goal" not in st.session_state:
+            st.session_state.inp_goal = f"{int(max_possible * 0.8):,}"
+
+        st.text_input(
             "🎯 Mục tiêu tiết kiệm tháng này (VNĐ):", 
-            value=f"{int(max_possible * 0.8):,}"
+            key="inp_goal",
+            on_change=format_money_callback,
+            args=("inp_goal",)
         )
-        goal_val = parse_amount(goal_raw)
-        st.caption(f"➔ Số tiền nhận diện: **{goal_val:,.0f} VNĐ**")
+        goal_val = parse_amount(st.session_state.inp_goal)
+        st.caption(f"➔ Số tiền: **{goal_val:,.0f} VNĐ** *({num2vi_words(goal_val)})*")
 
         col1, col2 = st.columns(2)
         with col1:
@@ -437,19 +497,27 @@ with tab_stats:
 
     with col_form:
         st.markdown("##### ✍️ Ghi nhận khoản chi thực tế")
-        with st.form("log_form", clear_on_submit=True):
-            log_date = st.date_input("Ngày giao dịch")
-            log_cat = st.selectbox("Danh mục", list(st.session_state.fixed_expenses.keys()))
-            log_amt_raw = st.text_input("Số tiền (VNĐ)", value="50,000", placeholder="VD: 100,000")
-            log_amt = parse_amount(log_amt_raw)
-            st.caption(f"➔ Số tiền: **{log_amt:,.0f} VNĐ**")
-            log_note = st.text_input("Ghi chú khoản chi")
-            
-            submitted = st.form_submit_button("➕ Thêm khoản chi", use_container_width=True)
-            if submitted and log_amt > 0:
+        log_date = st.date_input("Ngày giao dịch")
+        log_cat = st.selectbox("Danh mục", list(st.session_state.fixed_expenses.keys()))
+        
+        # Ô nhập số tiền động với Callback tự nhảy số & nhảy chữ bên dưới
+        st.text_input(
+            "Số tiền (VNĐ)",
+            key="inp_log_amt",
+            on_change=format_money_callback,
+            args=("inp_log_amt",)
+        )
+        log_amt = parse_amount(st.session_state.inp_log_amt)
+        st.caption(f"➔ Số tiền: **{log_amt:,.0f} VNĐ** *({num2vi_words(log_amt)})*")
+        
+        log_note = st.text_input("Ghi chú khoản chi", placeholder="VD: Mua thực phẩm siêu thị")
+        
+        if st.button("➕ Thêm khoản chi", use_container_width=True):
+            if log_amt > 0:
                 new_row = pd.DataFrame([{"Ngày": str(log_date), "Danh mục": log_cat, "Số tiền": log_amt, "Ghi chú": log_note}])
                 st.session_state.daily_logs = pd.concat([st.session_state.daily_logs, new_row], ignore_index=True)
                 st.toast("Đã ghi nhận chi tiêu thành công!", icon="✅")
+                st.session_state.inp_log_amt = "0"
                 st.rerun()
 
     st.divider()
