@@ -66,7 +66,8 @@ def logout_user():
         "daily_logs", "monthly_history", "chat_history", "modal_step",
         "inp_income", "inp_rent", "inp_food", "inp_util", "inp_ent", 
         "inp_trans", "inp_other", "inp_log_amt", "inp_log_note", "inp_goal", "inp_emergency",
-        "multiselect_delete_logs", "daily_logs_table_grid", "current_options_dict"
+        "multiselect_delete_logs", "daily_logs_table_grid", "current_options_dict",
+        "show_confirm_dialog", "pending_expense", "expense_added_msg", "expense_error_msg"
     ]
     for key in keys_to_clear:
         if key in st.session_state:
@@ -165,6 +166,59 @@ def add_expense_action(log_date, log_cat, amt, log_note):
     st.session_state.inp_log_note = ""
     sync_data()
 
+def confirm_emergency_action():
+    """Callback xác nhận chi khi chạm quỹ khẩn cấp."""
+    pending = st.session_state.get("pending_expense", {})
+    if pending:
+        add_expense_action(
+            pending["log_date"],
+            pending["log_cat"],
+            pending["amt"],
+            pending["log_note"]
+        )
+        st.session_state.show_confirm_dialog = False
+        st.session_state.pending_expense = None
+        st.session_state.expense_added_msg = True
+
+def cancel_emergency_action():
+    """Callback hủy bỏ giao dịch khẩn cấp."""
+    st.session_state.show_confirm_dialog = False
+    st.session_state.pending_expense = None
+
+def handle_add_expense_click():
+    """Callback kiểm tra và xử lý khi bấm nút Thêm khoản chi."""
+    log_amt = parse_amount(st.session_state.get("inp_log_amt", "0"))
+    if log_amt <= 0:
+        st.session_state.expense_error_msg = "Vui lòng nhập số tiền hợp lệ lớn hơn 0."
+        return
+
+    st.session_state.expense_error_msg = None
+    log_date = st.session_state.get("inp_log_date", datetime.now().date())
+    log_cat = st.session_state.get("inp_log_cat", list(st.session_state.fixed_expenses.keys())[0])
+    log_note = st.session_state.get("inp_log_note", "")
+
+    fixed_exp_total = sum(st.session_state.fixed_expenses.values())
+    logged_exp_total = st.session_state.daily_logs["Số tiền"].sum() if not st.session_state.daily_logs.empty else 0.0
+    grand_total_exp = fixed_exp_total + logged_exp_total
+    remaining_balance = st.session_state.income - grand_total_exp
+
+    future_bal = remaining_balance - log_amt
+    em_fund = st.session_state.get("emergency_fund", 5000000.0)
+
+    if future_bal <= em_fund:
+        st.session_state.show_confirm_dialog = True
+        st.session_state.pending_expense = {
+            "amt": log_amt,
+            "log_date": log_date,
+            "log_cat": log_cat,
+            "log_note": log_note,
+            "future_bal": future_bal,
+            "em_fund": em_fund
+        }
+    else:
+        add_expense_action(log_date, log_cat, log_amt, log_note)
+        st.session_state.expense_added_msg = True
+
 @st.dialog("⚠️ Xác nhận Tiêu dùng Số dư Khẩn cấp")
 def confirm_emergency_expense_modal(amt, log_date, log_cat, log_note, future_bal, em_fund):
     """Dialog hỏi xác nhận người dùng khi khoản chi động tới Quỹ khẩn cấp."""
@@ -177,13 +231,23 @@ def confirm_emergency_expense_modal(amt, log_date, log_cat, log_note, future_bal
     
     col_confirm, col_cancel = st.columns(2)
     with col_confirm:
-        if st.button("Xác nhận chi dùng ⚠️", type="primary", use_container_width=True):
-            add_expense_action(log_date, log_cat, amt, log_note)
-            st.success("Đã xác nhận và ghi nhận khoản chi!")
-            st.rerun()
+        st.button("Xác nhận chi dùng ⚠️", type="primary", use_container_width=True, on_click=confirm_emergency_action)
     with col_cancel:
-        if st.button("Hủy bỏ giao dịch ❌", use_container_width=True):
-            st.rerun()
+        st.button("Hủy bỏ giao dịch ❌", use_container_width=True, on_click=cancel_emergency_action)
+
+def open_config_callback():
+    """Callback mở lại bảng Cấu hình."""
+    st.session_state.configured = False
+    st.session_state.modal_step = 1
+    st.session_state.inp_income = f"{int(st.session_state.income):,}"
+    st.session_state.inp_rent = f"{int(st.session_state.fixed_expenses.get('Tiền nhà', 0)):,}"
+    st.session_state.inp_food = f"{int(st.session_state.fixed_expenses.get('Thực phẩm', 0)):,}"
+    st.session_state.inp_util = f"{int(st.session_state.fixed_expenses.get('Điện nước & Mạng', 0)):,}"
+    st.session_state.inp_ent = f"{int(st.session_state.fixed_expenses.get('Giải trí', 0)):,}"
+    st.session_state.inp_trans = f"{int(st.session_state.fixed_expenses.get('Đi lại', 0)):,}"
+    st.session_state.inp_other = f"{int(st.session_state.fixed_expenses.get('Khác', 0)):,}"
+    st.session_state.inp_emergency = f"{int(st.session_state.get('emergency_fund', 5000000.0)):,}"
+    sync_data()
 
 def delete_grid_callback():
     """Callback xử lý xóa dòng chọn trên bảng"""
@@ -816,6 +880,19 @@ def show_setup_modal():
 if not st.session_state.configured:
     show_setup_modal()
 
+# HIỂN THỊ DIALOG XÁC NHẬN NẾU CÓ CẢNH BÁO KHẨN CẤP
+if st.session_state.get("show_confirm_dialog", False):
+    pending = st.session_state.get("pending_expense", {})
+    if pending:
+        confirm_emergency_expense_modal(
+            pending["amt"],
+            pending["log_date"],
+            pending["log_cat"],
+            pending["log_note"],
+            pending["future_bal"],
+            pending["em_fund"]
+        )
+
 cur_exp_combined = st.session_state.fixed_expenses.copy()
 if not st.session_state.daily_logs.empty:
     for _, row in st.session_state.daily_logs.iterrows():
@@ -838,19 +915,7 @@ with head_col1:
 with head_col2:
     btn_c1, btn_c2 = st.columns(2)
     with btn_c1:
-        if st.button("⚙️ Cấu hình", use_container_width=True):
-            st.session_state.configured = False
-            st.session_state.modal_step = 1
-            st.session_state.inp_income = f"{int(st.session_state.income):,}"
-            st.session_state.inp_rent = f"{int(st.session_state.fixed_expenses.get('Tiền nhà', 0)):,}"
-            st.session_state.inp_food = f"{int(st.session_state.fixed_expenses.get('Thực phẩm', 0)):,}"
-            st.session_state.inp_util = f"{int(st.session_state.fixed_expenses.get('Điện nước & Mạng', 0)):,}"
-            st.session_state.inp_ent = f"{int(st.session_state.fixed_expenses.get('Giải trí', 0)):,}"
-            st.session_state.inp_trans = f"{int(st.session_state.fixed_expenses.get('Đi lại', 0)):,}"
-            st.session_state.inp_other = f"{int(st.session_state.fixed_expenses.get('Khác', 0)):,}"
-            st.session_state.inp_emergency = f"{int(st.session_state.get('emergency_fund', 5000000.0)):,}"
-            sync_data()
-            st.rerun()
+        st.button("⚙️ Cấu hình", use_container_width=True, on_click=open_config_callback)
     with btn_c2:
         if st.button("🚪 Đăng xuất", use_container_width=True):
             logout_user()
@@ -1069,18 +1134,15 @@ with tab_stats:
         
         log_note = st.text_input("Ghi chú khoản chi", key="inp_log_note", placeholder="VD: Mua thực phẩm siêu thị")
         
-        if st.button("➕ Thêm khoản chi", use_container_width=True):
-            if log_amt > 0:
-                future_bal = remaining_balance - log_amt
-                em_fund = st.session_state.get("emergency_fund", 5000000.0)
-                
-                # BẮT KIỂM TRA: Nếu số dư sau khoản chi <= Quỹ khẩn cấp -> Mở Modal bắt xác nhận
-                if future_bal <= em_fund:
-                    confirm_emergency_expense_modal(log_amt, log_date, log_cat, log_note, future_bal, em_fund)
-                else:
-                    add_expense_action(log_date, log_cat, log_amt, log_note)
-                    st.success("Đã ghi nhận khoản chi thành công!")
-                    st.rerun()
+        st.button("➕ Thêm khoản chi", use_container_width=True, on_click=handle_add_expense_click)
+
+        if st.session_state.get("expense_error_msg"):
+            st.error(st.session_state.expense_error_msg)
+            st.session_state.expense_error_msg = None
+
+        if st.session_state.get("expense_added_msg"):
+            st.success("Đã ghi nhận khoản chi thành công!")
+            st.session_state.expense_added_msg = False
 
     st.divider()
 
