@@ -50,7 +50,7 @@ def num2vi_words(val) -> str:
         return f"{n} VNĐ"
 
 def add_expense_callback():
-    """Hàm callback xử lý thêm khoản chi an toàn, tránh lỗi StreamlitAPIException"""
+    """Hàm callback xử lý thêm khoản chi an toàn"""
     amt = parse_amount(st.session_state.get("inp_log_amt", "0"))
     if amt > 0:
         log_date = st.session_state.get("inp_log_date")
@@ -67,13 +67,14 @@ def add_expense_callback():
         st.session_state.inp_log_amt = "0"
         st.session_state.inp_log_note = ""
 
-# 2. Tiêm CSS Tùy Biến (Ultra-Modern Fintech UI)
+# 2. Tiêm CSS Tùy Biến (Sửa lỗi đè Icon Font)
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
     
-    * {
-        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
+    /* Áp dụng font an toàn chỉ cho text của app, không làm vỡ Icon Streamlit */
+    .stApp, .stApp p, .stApp div:not([class*="material"]), .stApp button, .stApp input, .stApp select, .stApp label {
+        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
     .stApp {
@@ -590,7 +591,6 @@ with tab_stats:
         
         st.text_input("Ghi chú khoản chi", key="inp_log_note", placeholder="VD: Mua thực phẩm siêu thị")
         
-        # Gọi hàm callback on_click để thêm khoản chi an toàn
         st.button("➕ Thêm khoản chi", use_container_width=True, on_click=add_expense_callback)
 
     st.divider()
