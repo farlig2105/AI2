@@ -63,7 +63,7 @@ def add_expense_callback():
             "Số tiền": amt, 
             "Ghi chú": log_note
         }])
-        st.session_state.daily_logs = pd.concat([st.session_state.daily_logs, new_row], ignore_ignore=True) if hasattr(st.session_state.daily_logs, 'ignore_ignore') else pd.concat([st.session_state.daily_logs, new_row], ignore_index=True)
+        st.session_state.daily_logs = pd.concat([st.session_state.daily_logs, new_row], ignore_index=True)
         st.session_state.inp_log_amt = "0"
         st.session_state.inp_log_note = ""
 
@@ -465,7 +465,7 @@ with tab_stats:
     st.write("")
     col_chart1, col_chart2, col_form = st.columns([1, 1, 0.95])
 
-    # --- BIỂU ĐỒ 1: CẤU TRÚC NGÂN SÁCH CỐ ĐỊNH (NÂNG CẤP UI & HOVER POP-OUT) ---
+    # --- BIỂU ĐỒ 1: CẤU TRÚC NGÂN SÁCH CỐ ĐỊNH ---
     with col_chart1:
         st.markdown("##### 📊 Phân bổ ngân sách cố định")
         df_fixed = pd.DataFrame(list(st.session_state.fixed_expenses.items()), columns=["Danh mục", "Số tiền"])
@@ -478,11 +478,10 @@ with tab_stats:
             color_discrete_sequence=['#6366F1', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4']
         )
         
-        # Cấu hình hiệu ứng Nẩy/Phồng (hoveroffset) & Thẻ thông tin Glassmorphism
         fig1.update_traces(
             textposition='inside',
             textinfo='percent',
-            insidetextfont=dict(size=12, color='#FFFFFF', family="Plus Jakarta Sans", weight="bold"),
+            insidetextfont=dict(size=12, color='#FFFFFF', family="Plus Jakarta Sans"),
             hovertemplate=(
                 "<div style='padding: 6px; border-radius: 8px;'>"
                 "<b style='font-size: 14px; color: #818CF8;'>%{label}</b><br>"
@@ -490,8 +489,8 @@ with tab_stats:
                 "📈 Tỷ lệ: <b>%{percent}</b>"
                 "</div><extra></extra>"
             ),
-            hoveroffset=20,  # HIỆU ỨNG POP-OUT KHI DI CHUỘT
-            marker=dict(line=dict(color='#0F172A', width=3)),  # Viền giữa các miếng bánh
+            hoveroffset=20,  # HIỆU ỨNG POP-OUT NẨY BÁNH KHI DI CHUỘT
+            marker=dict(line=dict(color='#0F172A', width=3)),
             hoverlabel=dict(
                 bgcolor="rgba(15, 23, 42, 0.95)",
                 bordercolor="#6366F1",
@@ -526,7 +525,7 @@ with tab_stats:
         )
         st.plotly_chart(fig1, use_container_width=True)
 
-    # --- BIỂU ĐỒ 2: THỰC TẾ CHI TIÊU & SỐ DƯ CÒN LẠI (NÂNG CẤP UI & HOVER POP-OUT) ---
+    # --- BIỂU ĐỒ 2: THỰC TẾ CHI TIÊU & SỐ DƯ CÒN LẠI ---
     with col_chart2:
         st.markdown("##### 📈 Chi tiêu thực tế & Số dư còn lại")
         
@@ -564,7 +563,7 @@ with tab_stats:
         fig2.update_traces(
             textposition='inside',
             textinfo='percent',
-            insidetextfont=dict(size=12, color='#FFFFFF', family="Plus Jakarta Sans", weight="bold"),
+            insidetextfont=dict(size=12, color='#FFFFFF', family="Plus Jakarta Sans"),
             hovertemplate=(
                 "<div style='padding: 6px; border-radius: 8px;'>"
                 f"<b style='font-size: 14px; color: {bal_color};'>%{{label}}</b><br>"
@@ -572,8 +571,8 @@ with tab_stats:
                 "📈 Tỷ lệ: <b>%{percent}</b>"
                 "</div><extra></extra>"
             ),
-            hoveroffset=20,  # HIỆU ỨNG POP-OUT KHI DI CHUỘT
-            marker=dict(line=dict(color='#0F172A', width=3)),  # Viền giữa các miếng bánh
+            hoveroffset=20,  # HIỆU ỨNG POP-OUT NẨY BÁNH KHI DI CHUỘT
+            marker=dict(line=dict(color='#0F172A', width=3)),
             hoverlabel=dict(
                 bgcolor="rgba(15, 23, 42, 0.95)",
                 bordercolor=bal_color,
