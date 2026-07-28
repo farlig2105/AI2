@@ -63,16 +63,15 @@ def add_expense_callback():
             "Số tiền": amt, 
             "Ghi chú": log_note
         }])
-        st.session_state.daily_logs = pd.concat([st.session_state.daily_logs, new_row], ignore_index=True)
+        st.session_state.daily_logs = pd.concat([st.session_state.daily_logs, new_row], ignore_ignore=True) if hasattr(st.session_state.daily_logs, 'ignore_ignore') else pd.concat([st.session_state.daily_logs, new_row], ignore_index=True)
         st.session_state.inp_log_amt = "0"
         st.session_state.inp_log_note = ""
 
-# 2. Tiêm CSS Tùy Biến (Sửa lỗi đè Icon Font)
+# 2. Tiêm CSS Tùy Biến (Sửa lỗi Icon Font & Tối ưu UI)
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
     
-    /* Áp dụng font an toàn chỉ cho text của app, không làm vỡ Icon Streamlit */
     .stApp, .stApp p, .stApp div:not([class*="material"]), .stApp button, .stApp input, .stApp select, .stApp label {
         font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     }
@@ -466,7 +465,7 @@ with tab_stats:
     st.write("")
     col_chart1, col_chart2, col_form = st.columns([1, 1, 0.95])
 
-    # --- BIỂU ĐỒ 1: CẤU TRÚC NGÂN SÁCH CỐ ĐỊNH ---
+    # --- BIỂU ĐỒ 1: CẤU TRÚC NGÂN SÁCH CỐ ĐỊNH (NÂNG CẤP UI & HOVER POP-OUT) ---
     with col_chart1:
         st.markdown("##### 📊 Phân bổ ngân sách cố định")
         df_fixed = pd.DataFrame(list(st.session_state.fixed_expenses.items()), columns=["Danh mục", "Số tiền"])
@@ -475,17 +474,35 @@ with tab_stats:
             df_fixed, 
             values="Số tiền", 
             names="Danh mục", 
-            hole=0.6,
-            color_discrete_sequence=['#818CF8', '#34D399', '#FBBF24', '#F87171', '#A78BFA', '#F472B6']
+            hole=0.68,
+            color_discrete_sequence=['#6366F1', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4']
         )
+        
+        # Cấu hình hiệu ứng Nẩy/Phồng (hoveroffset) & Thẻ thông tin Glassmorphism
         fig1.update_traces(
             textposition='inside',
             textinfo='percent',
-            hovertemplate='<b>%{label}</b><br>Số tiền: %{value:,.0f} VNĐ<br>Tỷ lệ: %{percent}<extra></extra>'
+            insidetextfont=dict(size=12, color='#FFFFFF', family="Plus Jakarta Sans", weight="bold"),
+            hovertemplate=(
+                "<div style='padding: 6px; border-radius: 8px;'>"
+                "<b style='font-size: 14px; color: #818CF8;'>%{label}</b><br>"
+                "💵 Số tiền: <b>%{value:,.0f} VNĐ</b><br>"
+                "📈 Tỷ lệ: <b>%{percent}</b>"
+                "</div><extra></extra>"
+            ),
+            hoveroffset=20,  # HIỆU ỨNG POP-OUT KHI DI CHUỘT
+            marker=dict(line=dict(color='#0F172A', width=3)),  # Viền giữa các miếng bánh
+            hoverlabel=dict(
+                bgcolor="rgba(15, 23, 42, 0.95)",
+                bordercolor="#6366F1",
+                font_size=13,
+                font_family="Plus Jakarta Sans",
+                font_color="#F8FAFC"
+            )
         )
 
         fig1.add_annotation(
-            text=f"<span style='font-size:11px; color:#94A3B8; font-weight:600;'>TỔNG CỐ ĐỊNH</span><br><b style='font-size:16px; color:#F8FAFC;'>{fixed_exp_total:,.0f} đ</b>",
+            text=f"<span style='font-size:11px; color:#94A3B8; font-weight:600;'>TỔNG CỐ ĐỊNH</span><br><b style='font-size:17px; color:#F8FAFC;'>{fixed_exp_total:,.0f} đ</b>",
             x=0.5, y=0.5,
             showarrow=False,
             align="center"
@@ -499,17 +516,17 @@ with tab_stats:
             legend=dict(
                 orientation="h",
                 yanchor="bottom",
-                y=-0.3,
+                y=-0.35,
                 xanchor="center",
                 x=0.5,
-                font=dict(size=11)
+                font=dict(size=11, color='#CBD5E1')
             ),
-            margin=dict(t=10, b=50, l=10, r=10),
-            height=350
+            margin=dict(t=20, b=60, l=10, r=10),
+            height=370
         )
         st.plotly_chart(fig1, use_container_width=True)
 
-    # --- BIỂU ĐỒ 2: THỰC TẾ CHI TIÊU & SỐ DƯ CÒN LẠI ---
+    # --- BIỂU ĐỒ 2: THỰC TẾ CHI TIÊU & SỐ DƯ CÒN LẠI (NÂNG CẤP UI & HOVER POP-OUT) ---
     with col_chart2:
         st.markdown("##### 📈 Chi tiêu thực tế & Số dư còn lại")
         
@@ -535,22 +552,39 @@ with tab_stats:
             df_chart2, 
             values="Số tiền", 
             names="Danh mục", 
-            hole=0.6,
+            hole=0.68,
             color="Danh mục",
             color_discrete_map=color_map,
-            color_discrete_sequence=['#818CF8', '#A78BFA', '#FBBF24', '#38BDF8', '#818CF8', '#C084FC']
-        )
-        fig2.update_traces(
-            textposition='inside',
-            textinfo='percent',
-            hovertemplate='<b>%{label}</b><br>Số tiền: %{value:,.0f} VNĐ<br>Tỷ lệ: %{percent}<extra></extra>'
+            color_discrete_sequence=['#6366F1', '#8B5CF6', '#F59E0B', '#38BDF8', '#10B981', '#EC4899', '#F97316']
         )
 
         bal_color = "#34D399" if remaining_balance >= 0 else "#F87171"
         bal_label = "SỐ DƯ CÒN LẠI" if remaining_balance >= 0 else "THÂM HỤT"
 
+        fig2.update_traces(
+            textposition='inside',
+            textinfo='percent',
+            insidetextfont=dict(size=12, color='#FFFFFF', family="Plus Jakarta Sans", weight="bold"),
+            hovertemplate=(
+                "<div style='padding: 6px; border-radius: 8px;'>"
+                f"<b style='font-size: 14px; color: {bal_color};'>%{{label}}</b><br>"
+                "💵 Số tiền: <b>%{value:,.0f} VNĐ</b><br>"
+                "📈 Tỷ lệ: <b>%{percent}</b>"
+                "</div><extra></extra>"
+            ),
+            hoveroffset=20,  # HIỆU ỨNG POP-OUT KHI DI CHUỘT
+            marker=dict(line=dict(color='#0F172A', width=3)),  # Viền giữa các miếng bánh
+            hoverlabel=dict(
+                bgcolor="rgba(15, 23, 42, 0.95)",
+                bordercolor=bal_color,
+                font_size=13,
+                font_family="Plus Jakarta Sans",
+                font_color="#F8FAFC"
+            )
+        )
+
         fig2.add_annotation(
-            text=f"<span style='font-size:11px; color:#94A3B8; font-weight:600;'>{bal_label}</span><br><b style='font-size:16px; color:{bal_color};'>{remaining_balance:,.0f} đ</b>",
+            text=f"<span style='font-size:11px; color:#94A3B8; font-weight:600;'>{bal_label}</span><br><b style='font-size:17px; color:{bal_color};'>{remaining_balance:,.0f} đ</b>",
             x=0.5, y=0.5,
             showarrow=False,
             align="center"
@@ -564,13 +598,13 @@ with tab_stats:
             legend=dict(
                 orientation="h",
                 yanchor="bottom",
-                y=-0.3,
+                y=-0.35,
                 xanchor="center",
                 x=0.5,
-                font=dict(size=11)
+                font=dict(size=11, color='#CBD5E1')
             ),
-            margin=dict(t=10, b=50, l=10, r=10),
-            height=350
+            margin=dict(t=20, b=60, l=10, r=10),
+            height=370
         )
         st.plotly_chart(fig2, use_container_width=True)
 
