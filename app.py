@@ -66,7 +66,8 @@ def logout_user():
         "configured", "income", "fixed_expenses", "savings_goal", 
         "daily_logs", "monthly_history", "chat_history", "modal_step",
         "inp_income", "inp_rent", "inp_food", "inp_util", "inp_ent", 
-        "inp_trans", "inp_other", "inp_log_amt", "inp_log_note", "inp_goal"
+        "inp_trans", "inp_other", "inp_log_amt", "inp_log_note", "inp_goal",
+        "multiselect_delete_logs", "daily_logs_table_grid"
     ]
     for key in keys_to_clear:
         if key in st.session_state:
@@ -407,7 +408,6 @@ st.markdown("""
         font-size: 1.2rem;
     }
     
-    /* Style cho màn hình Login */
     .auth-container {
         max-width: 460px;
         margin: 60px auto;
@@ -469,7 +469,7 @@ if not st.session_state.get("authenticated", False):
                     save_users(users)
                     st.success("Tạo tài khoản thành công! Bạn có thể chuyển sang tab Đăng nhập ngay bây giờ.")
 
-    st.stop()  # Dừng ứng dụng tại đây nếu chưa đăng nhập
+    st.stop()
 
 # ----------------------------------------------------
 # 7. KHỞI TẠO SESSION STATE & TẢI DỮ LIỆU ĐÃ LƯU CỦA USER
@@ -532,21 +532,15 @@ if "chat_history" not in st.session_state:
         {"role": "assistant", "content": "👋 **Xin chào! Tôi là FinBot AI** - Trợ lý tài chính thông minh của bạn.\n\nHãy bấm vào các gợi ý nhanh bên dưới hoặc đặt câu hỏi để tôi phân tích dòng tiền giúp bạn nhé!"}
     ]
 
-# Khởi tạo giá trị các ô nhập liệu theo dữ liệu vừa khôi phục
-if "inp_income" not in st.session_state:
-    st.session_state.inp_income = f"{int(st.session_state.income):,}"
-if "inp_rent" not in st.session_state:
-    st.session_state.inp_rent = f"{int(st.session_state.fixed_expenses.get('Tiền nhà', 0)):,}"
-if "inp_food" not in st.session_state:
-    st.session_state.inp_food = f"{int(st.session_state.fixed_expenses.get('Thực phẩm', 0)):,}"
-if "inp_util" not in st.session_state:
-    st.session_state.inp_util = f"{int(st.session_state.fixed_expenses.get('Điện nước & Mạng', 0)):,}"
-if "inp_ent" not in st.session_state:
-    st.session_state.inp_ent = f"{int(st.session_state.fixed_expenses.get('Giải trí', 0)):,}"
-if "inp_trans" not in st.session_state:
-    st.session_state.inp_trans = f"{int(st.session_state.fixed_expenses.get('Đi lại', 0)):,}"
-if "inp_other" not in st.session_state:
-    st.session_state.inp_other = f"{int(st.session_state.fixed_expenses.get('Khác', 0)):,}"
+# Đảm bảo các ô nhập liệu được đồng bộ chính xác từ bộ nhớ
+st.session_state.inp_income = f"{int(st.session_state.income):,}"
+st.session_state.inp_rent = f"{int(st.session_state.fixed_expenses.get('Tiền nhà', 0)):,}"
+st.session_state.inp_food = f"{int(st.session_state.fixed_expenses.get('Thực phẩm', 0)):,}"
+st.session_state.inp_util = f"{int(st.session_state.fixed_expenses.get('Điện nước & Mạng', 0)):,}"
+st.session_state.inp_ent = f"{int(st.session_state.fixed_expenses.get('Giải trí', 0)):,}"
+st.session_state.inp_trans = f"{int(st.session_state.fixed_expenses.get('Đi lại', 0)):,}"
+st.session_state.inp_other = f"{int(st.session_state.fixed_expenses.get('Khác', 0)):,}"
+
 if "inp_log_amt" not in st.session_state:
     st.session_state.inp_log_amt = "0"
 if "inp_log_note" not in st.session_state:
@@ -934,6 +928,11 @@ with tab_stats:
                     st.session_state.daily_logs = st.session_state.daily_logs.drop(
                         st.session_state.daily_logs.index[selected_rows]
                     ).reset_index(drop=True)
+                    
+                    # Làm sạch bộ nhớ bảng chọn
+                    if "daily_logs_table_grid" in st.session_state:
+                        del st.session_state["daily_logs_table_grid"]
+                        
                     sync_data()
                     st.success("✅ Đã xóa thành công các khoản chi đã chọn!")
                     st.rerun()
@@ -952,8 +951,13 @@ with tab_stats:
             
             if selected_dropdown_items:
                 if st.button("🗑️ Xóa các mục đã chọn trong danh sách", use_container_width=True):
-                    indices_to_drop = [options_dict[item] for item in selected_dropdown_items]
-                    st.session_state.daily_logs = st.session_state.daily_logs.drop(indices_to_drop).reset_index(drop=True)
+                    indices_to_drop = [options_dict[item] for item in selected_dropdown_items if item in options_dict]
+                    if indices_to_drop:
+                        st.session_state.daily_logs = st.session_state.daily_logs.drop(indices_to_drop).reset_index(drop=True)
+                    
+                    # ĐẶC BIỆT NGHỆ THUẬT: Xóa sạch bộ nhớ đệm widget chọn trước khi rerun để tránh lỗi!
+                    st.session_state.multiselect_delete_logs = []
+                    
                     sync_data()
                     st.success("✅ Đã xóa thành công khoản chi được chọn!")
                     st.rerun()
