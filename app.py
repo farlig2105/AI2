@@ -6,7 +6,6 @@ from datetime import datetime
 import json
 import os
 import hashlib
-import streamlit.components.v1 as components
 
 # ----------------------------------------------------
 # 1. CẤU HÌNH TRANG & DANH MỤC BIỂU TƯỢNG
@@ -171,31 +170,32 @@ def add_expense_callback():
         sync_data()
 
 # ----------------------------------------------------
-# 5. TIÊM CSS TÙY BIẾN (TỐI ƯU HOÀN HẢO LIGHT & DARK MODE)
+# 5. TIÊM CSS TÙY BIẾN (SỬA LỖI MÀU BẢNG & CHỮ KHI SANG LIGHT MODE)
 # ----------------------------------------------------
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
     
-    /* MẶC ĐỊNH & HỆ THỐNG */
+    /* MẶC ĐỊNH (LIGHT MODE PHỦ RỘNG CÁC TỰ CHỌN THUỘC TÍNH) */
     :root {
         --bg-gradient: linear-gradient(135deg, #F8FAFC 0%, #EEF2FF 50%, #E2E8F0 100%);
         --text-primary: #0F172A;
         --text-secondary: #475569;
-        --card-bg: rgba(255, 255, 255, 0.85);
+        --card-bg: rgba(255, 255, 255, 0.9);
         --card-hover-bg: #FFFFFF;
-        --card-border: rgba(203, 213, 225, 0.6);
-        --card-shadow: 0 10px 25px -5px rgba(148, 163, 184, 0.18);
+        --card-border: rgba(203, 213, 225, 0.8);
+        --card-shadow: 0 10px 25px -5px rgba(148, 163, 184, 0.2);
         --input-bg: #FFFFFF;
         --input-border: #CBD5E1;
         --input-text: #0F172A;
         --tab-bg: #E2E8F0;
         --tab-text: #475569;
         --table-bg: #FFFFFF;
+        --table-text: #0F172A;
         --table-border: #E2E8F0;
-        --table-header-bg: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.06) 100%);
-        --table-header-text: #1E293B;
-        --table-row-hover: rgba(99, 102, 241, 0.05);
+        --table-header-bg: #F1F5F9;
+        --table-header-text: #0F172A;
+        --table-row-hover: rgba(99, 102, 241, 0.08);
         --dialog-bg: #FFFFFF;
 
         --badge-red-bg: #FEE2E2;
@@ -216,55 +216,57 @@ st.markdown("""
             --bg-gradient: radial-gradient(circle at 50% 0%, #1E1B4B 0%, #0F172A 50%, #020617 100%);
             --text-primary: #F8FAFC;
             --text-secondary: #CBD5E1;
-            --card-bg: rgba(30, 41, 59, 0.5);
-            --card-hover-bg: rgba(30, 41, 59, 0.75);
-            --card-border: rgba(255, 255, 255, 0.1);
+            --card-bg: rgba(30, 41, 59, 0.6);
+            --card-hover-bg: rgba(30, 41, 59, 0.85);
+            --card-border: rgba(255, 255, 255, 0.12);
             --card-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5);
-            --input-bg: rgba(15, 23, 42, 0.75);
-            --input-border: rgba(255, 255, 255, 0.18);
+            --input-bg: rgba(15, 23, 42, 0.85);
+            --input-border: rgba(255, 255, 255, 0.2);
             --input-text: #FFFFFF;
             --tab-bg: rgba(15, 23, 42, 0.6);
             --tab-text: #CBD5E1;
-            --table-bg: rgba(15, 23, 42, 0.65);
-            --table-border: rgba(255, 255, 255, 0.12);
-            --table-header-bg: linear-gradient(135deg, rgba(99, 102, 241, 0.35) 0%, rgba(139, 92, 246, 0.25) 100%);
+            --table-bg: #0F172A;
+            --table-text: #F8FAFC;
+            --table-border: rgba(255, 255, 255, 0.15);
+            --table-header-bg: #1E293B;
             --table-header-text: #E2E8F0;
-            --table-row-hover: rgba(99, 102, 241, 0.18);
+            --table-row-hover: rgba(99, 102, 241, 0.2);
             --dialog-bg: rgba(15, 23, 42, 0.95);
 
-            --badge-red-bg: rgba(239, 68, 68, 0.18);
+            --badge-red-bg: rgba(239, 68, 68, 0.2);
             --badge-red-text: #FCA5A5;
-            --badge-red-border: rgba(239, 68, 68, 0.35);
+            --badge-red-border: rgba(239, 68, 68, 0.4);
 
-            --badge-green-bg: rgba(16, 185, 129, 0.18);
+            --badge-green-bg: rgba(16, 185, 129, 0.2);
             --badge-green-text: #6EE7B7;
-            --badge-green-border: rgba(16, 185, 129, 0.35);
+            --badge-green-border: rgba(16, 185, 129, 0.4);
 
-            --badge-gray-bg: rgba(100, 116, 139, 0.18);
+            --badge-gray-bg: rgba(100, 116, 139, 0.2);
             --badge-gray-text: #CBD5E1;
-            --badge-gray-border: rgba(100, 116, 139, 0.35);
+            --badge-gray-border: rgba(100, 116, 139, 0.4);
         }
     }
 
-    /* ÉP BUỘC KHI CHỌN LIGHT MODE TRÊN MENU STREAMLIT */
+    /* ÉP BUỘC CSS KHI NGƯỜI DÙNG CHỌN LIGHT MODE TRÊN MENU STREAMLIT */
     [data-theme="light"], .stApp[data-theme="light"], body[data-theme="light"] {
         --bg-gradient: linear-gradient(135deg, #F8FAFC 0%, #EEF2FF 50%, #E2E8F0 100%) !important;
         --text-primary: #0F172A !important;
         --text-secondary: #475569 !important;
-        --card-bg: rgba(255, 255, 255, 0.85) !important;
+        --card-bg: rgba(255, 255, 255, 0.9) !important;
         --card-hover-bg: #FFFFFF !important;
-        --card-border: rgba(203, 213, 225, 0.6) !important;
-        --card-shadow: 0 10px 25px -5px rgba(148, 163, 184, 0.18) !important;
+        --card-border: rgba(203, 213, 225, 0.8) !important;
+        --card-shadow: 0 10px 25px -5px rgba(148, 163, 184, 0.2) !important;
         --input-bg: #FFFFFF !important;
         --input-border: #CBD5E1 !important;
         --input-text: #0F172A !important;
         --tab-bg: #E2E8F0 !important;
         --tab-text: #475569 !important;
         --table-bg: #FFFFFF !important;
+        --table-text: #0F172A !important;
         --table-border: #E2E8F0 !important;
-        --table-header-bg: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.06) 100%) !important;
-        --table-header-text: #1E293B !important;
-        --table-row-hover: rgba(99, 102, 241, 0.05) !important;
+        --table-header-bg: #F1F5F9 !important;
+        --table-header-text: #0F172A !important;
+        --table-row-hover: rgba(99, 102, 241, 0.08) !important;
         --dialog-bg: #FFFFFF !important;
 
         --badge-red-bg: #FEE2E2 !important;
@@ -280,38 +282,39 @@ st.markdown("""
         --badge-gray-border: #CBD5E1 !important;
     }
 
-    /* ÉP BUỘC KHI CHỌN DARK MODE TRÊN MENU STREAMLIT */
+    /* ÉP BUỘC CSS KHI NGƯỜI DÙNG CHỌN DARK MODE TRÊN MENU STREAMLIT */
     [data-theme="dark"], .stApp[data-theme="dark"], body[data-theme="dark"] {
         --bg-gradient: radial-gradient(circle at 50% 0%, #1E1B4B 0%, #0F172A 50%, #020617 100%) !important;
         --text-primary: #F8FAFC !important;
         --text-secondary: #CBD5E1 !important;
-        --card-bg: rgba(30, 41, 59, 0.5) !important;
-        --card-hover-bg: rgba(30, 41, 59, 0.75) !important;
-        --card-border: rgba(255, 255, 255, 0.1) !important;
+        --card-bg: rgba(30, 41, 59, 0.6) !important;
+        --card-hover-bg: rgba(30, 41, 59, 0.85) !important;
+        --card-border: rgba(255, 255, 255, 0.12) !important;
         --card-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5) !important;
-        --input-bg: rgba(15, 23, 42, 0.75) !important;
-        --input-border: rgba(255, 255, 255, 0.18) !important;
+        --input-bg: rgba(15, 23, 42, 0.85) !important;
+        --input-border: rgba(255, 255, 255, 0.2) !important;
         --input-text: #FFFFFF !important;
         --tab-bg: rgba(15, 23, 42, 0.6) !important;
         --tab-text: #CBD5E1 !important;
-        --table-bg: rgba(15, 23, 42, 0.65) !important;
-        --table-border: rgba(255, 255, 255, 0.12) !important;
-        --table-header-bg: linear-gradient(135deg, rgba(99, 102, 241, 0.35) 0%, rgba(139, 92, 246, 0.25) 100%) !important;
+        --table-bg: #0F172A !important;
+        --table-text: #F8FAFC !important;
+        --table-border: rgba(255, 255, 255, 0.15) !important;
+        --table-header-bg: #1E293B !important;
         --table-header-text: #E2E8F0 !important;
-        --table-row-hover: rgba(99, 102, 241, 0.18) !important;
+        --table-row-hover: rgba(99, 102, 241, 0.2) !important;
         --dialog-bg: rgba(15, 23, 42, 0.95) !important;
 
-        --badge-red-bg: rgba(239, 68, 68, 0.18) !important;
+        --badge-red-bg: rgba(239, 68, 68, 0.2) !important;
         --badge-red-text: #FCA5A5 !important;
-        --badge-red-border: rgba(239, 68, 68, 0.35) !important;
+        --badge-red-border: rgba(239, 68, 68, 0.4) !important;
 
-        --badge-green-bg: rgba(16, 185, 129, 0.18) !important;
+        --badge-green-bg: rgba(16, 185, 129, 0.2) !important;
         --badge-green-text: #6EE7B7 !important;
-        --badge-green-border: rgba(16, 185, 129, 0.35) !important;
+        --badge-green-border: rgba(16, 185, 129, 0.4) !important;
 
-        --badge-gray-bg: rgba(100, 116, 139, 0.18) !important;
+        --badge-gray-bg: rgba(100, 116, 139, 0.2) !important;
         --badge-gray-text: #CBD5E1 !important;
-        --badge-gray-border: rgba(100, 116, 139, 0.35) !important;
+        --badge-gray-border: rgba(100, 116, 139, 0.4) !important;
     }
 
     .stApp {
@@ -320,13 +323,27 @@ st.markdown("""
         font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
     }
 
-    /* Đảm bảo toàn bộ chữ tiêu đề, đoạn văn có độ tương phản chuẩn */
+    /* Đảm bảo toàn bộ tiêu đề & văn bản có màu hiển thị sắc nét */
     h1, h2, h3, h4, h5, h6, .stMarkdown, .stMarkdown p, .stMarkdown span {
         color: var(--text-primary) !important;
     }
 
     .stCaption, [data-testid="stCaptionContainer"] {
         color: var(--text-secondary) !important;
+    }
+
+    /* XỬ LÝ KHẮC PHỤC TRIỆT ĐỂ MÀU BẢNG STREAMLIT DATAFRAME */
+    div[data-testid="stDataFrame"], [data-testid="stTable"] {
+        background-color: var(--table-bg) !important;
+        color: var(--table-text) !important;
+        border: 1px solid var(--table-border) !important;
+        border-radius: 16px !important;
+        padding: 6px !important;
+        box-shadow: var(--card-shadow) !important;
+    }
+
+    div[data-testid="stDataFrame"] * {
+        color: var(--table-text) !important;
     }
 
     /* FORM ĐĂNG NHẬP / ĐĂNG KÝ */
@@ -436,15 +453,6 @@ st.markdown("""
         box-shadow: 0 8px 20px rgba(99, 102, 241, 0.35) !important;
     }
 
-    div[data-testid="stDataFrame"] {
-        background: var(--table-bg) !important;
-        border: 1px solid var(--table-border) !important;
-        border-radius: 18px !important;
-        padding: 10px !important;
-        backdrop-filter: blur(16px) !important;
-        box-shadow: var(--card-shadow) !important;
-    }
-
     div[role="dialog"] {
         border-radius: 24px !important;
         background: var(--dialog-bg) !important;
@@ -503,7 +511,7 @@ st.markdown("""
     .sub-green { color: #10B981 !important; }
     .sub-red { color: #EF4444 !important; }
 
-    /* BẢNG TÙY BIẾN HTML */
+    /* BẢNG HTML TÙY BIẾN CHO TAB 2 */
     .custom-table-container {
         border-radius: 18px;
         overflow: hidden;
@@ -517,7 +525,7 @@ st.markdown("""
         width: 100%;
         border-collapse: collapse;
         text-align: left;
-        color: var(--text-primary);
+        color: var(--table-text);
     }
     .custom-table thead tr {
         background: var(--table-header-bg);
@@ -536,6 +544,7 @@ st.markdown("""
         font-size: 1.02rem;
         border-bottom: 1px solid var(--table-border);
         vertical-align: middle;
+        color: var(--table-text);
     }
     .custom-table tbody tr {
         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -574,6 +583,7 @@ st.markdown("""
         gap: 12px;
         font-weight: 700;
         font-size: 1.02rem;
+        color: var(--table-text);
     }
     .cat-icon {
         width: 36px;
@@ -1377,11 +1387,11 @@ with tab_history:
 <span>{cat}</span>
 </div>
 </td>
-<td style="text-align: right; font-weight: 600; color: var(--text-secondary);">{val_prev:,.0f} VNĐ</td>
-<td style="text-align: right; font-weight: 700; color: var(--text-primary);">{val_cur:,.0f} VNĐ</td>
+<td style="text-align: right; font-weight: 600;">{val_prev:,.0f} VNĐ</td>
+<td style="text-align: right; font-weight: 700;">{val_cur:,.0f} VNĐ</td>
 <td style="text-align: right;"><span class="badge-pill {badge_class}">{diff_str}</span></td>
 <td style="text-align: center;"><span class="badge-pill {badge_class}">{pct_str}</span></td>
-<td style="text-align: center; font-weight: 600; font-size: 0.95rem; color: var(--text-secondary);">{status_str}</td>
+<td style="text-align: center; font-weight: 600; font-size: 0.95rem;">{status_str}</td>
 </tr>"""
 
         html_table += """</tbody>
