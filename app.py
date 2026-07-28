@@ -62,10 +62,10 @@ def logout_user():
     """Xóa bộ nhớ đệm session state và đăng xuất."""
     keys_to_clear = [
         "authenticated", "current_user", "data_loaded_from_disk", 
-        "configured", "income", "fixed_expenses", "savings_goal", 
+        "configured", "income", "fixed_expenses", "savings_goal", "emergency_fund",
         "daily_logs", "monthly_history", "chat_history", "modal_step",
         "inp_income", "inp_rent", "inp_food", "inp_util", "inp_ent", 
-        "inp_trans", "inp_other", "inp_log_amt", "inp_log_note", "inp_goal",
+        "inp_trans", "inp_other", "inp_log_amt", "inp_log_note", "inp_goal", "inp_emergency",
         "multiselect_delete_logs", "daily_logs_table_grid", "current_options_dict"
     ]
     for key in keys_to_clear:
@@ -100,6 +100,7 @@ def save_user_data():
         "configured": st.session_state.get("configured", False),
         "income": st.session_state.get("income", 15000000.0),
         "fixed_expenses": st.session_state.get("fixed_expenses", {}),
+        "emergency_fund": st.session_state.get("emergency_fund", 5000000.0),
         "savings_goal": st.session_state.get("savings_goal", 0.0),
         "daily_logs": daily_logs_list,
         "monthly_history": st.session_state.get("monthly_history", {})
@@ -151,23 +152,38 @@ def num2vi_words(val) -> str:
     else:
         return f"{n} VNĐ"
 
-def add_expense_callback():
-    amt = parse_amount(st.session_state.get("inp_log_amt", "0"))
-    if amt > 0:
-        log_date = st.session_state.get("inp_log_date")
-        log_cat = st.session_state.get("inp_log_cat")
-        log_note = st.session_state.get("inp_log_note", "")
+def add_expense_action(log_date, log_cat, amt, log_note):
+    """Hàm ghi nhận thực tế khoản chi vào DataFrame."""
+    new_row = pd.DataFrame([{
+        "Ngày": str(log_date), 
+        "Danh mục": log_cat, 
+        "Số tiền": amt, 
+        "Ghi chú": log_note
+    }])
+    st.session_state.daily_logs = pd.concat([st.session_state.daily_logs, new_row], ignore_index=True)
+    st.session_state.inp_log_amt = "0"
+    st.session_state.inp_log_note = ""
+    sync_data()
 
-        new_row = pd.DataFrame([{
-            "Ngày": str(log_date), 
-            "Danh mục": log_cat, 
-            "Số tiền": amt, 
-            "Ghi chú": log_note
-        }])
-        st.session_state.daily_logs = pd.concat([st.session_state.daily_logs, new_row], ignore_index=True)
-        st.session_state.inp_log_amt = "0"
-        st.session_state.inp_log_note = ""
-        sync_data()
+@st.dialog("⚠️ Xác nhận Tiêu dùng Số dư Khẩn cấp")
+def confirm_emergency_expense_modal(amt, log_date, log_cat, log_note, future_bal, em_fund):
+    """Dialog hỏi xác nhận người dùng khi khoản chi động tới Quỹ khẩn cấp."""
+    st.warning("🚨 **CẢNH BÁO NGUY CƠ TÀI CHÍNH!**")
+    st.write(
+        f"Khoản chi **{amt:,.0f} VNĐ** cho mục **{log_cat}** sẽ khiến số dư còn lại của bạn "
+        f"giảm xuống **{future_bal:,.0f} VNĐ**, chạm hoặc rơi xuống dưới mức **Quỹ Khẩn Cấp ({em_fund:,.0f} VNĐ)**."
+    )
+    st.info("💡 *Số tiền khẩn cấp này được quy định là không dùng tới trừ trường hợp bất khả kháng. Bạn có chắc chắn muốn duyệt khoản chi này không?*")
+    
+    col_confirm, col_cancel = st.columns(2)
+    with col_confirm:
+        if st.button("Xác nhận chi dùng ⚠️", type="primary", use_container_width=True):
+            add_expense_action(log_date, log_cat, amt, log_note)
+            st.success("Đã xác nhận và ghi nhận khoản chi!")
+            st.rerun()
+    with col_cancel:
+        if st.button("Hủy bỏ giao dịch ❌", use_container_width=True):
+            st.rerun()
 
 def delete_grid_callback():
     """Callback xử lý xóa dòng chọn trên bảng"""
@@ -181,7 +197,7 @@ def delete_grid_callback():
             sync_data()
 
 def delete_multiselect_callback():
-    """Callback xử lý xóa dòng chọn từ dropdown list (Đã sửa lỗi StreamlitAPIException)"""
+    """Callback xử lý xóa dòng chọn từ dropdown list"""
     selected_items = st.session_state.get("multiselect_delete_logs", [])
     options_dict = st.session_state.get("current_options_dict", {})
     if selected_items and options_dict:
@@ -189,7 +205,6 @@ def delete_multiselect_callback():
         if indices_to_drop:
             st.session_state.daily_logs = st.session_state.daily_logs.drop(indices_to_drop).reset_index(drop=True)
             sync_data()
-    # Reset biến an toàn trong callback
     st.session_state.multiselect_delete_logs = []
 
 # ----------------------------------------------------
@@ -267,74 +282,6 @@ st.markdown("""
             --badge-gray-text: #CBD5E1;
             --badge-gray-border: rgba(100, 116, 139, 0.4);
         }
-    }
-
-    [data-theme="light"], .stApp[data-theme="light"], body[data-theme="light"] {
-        --bg-gradient: linear-gradient(135deg, #F8FAFC 0%, #EEF2FF 50%, #E2E8F0 100%) !important;
-        --text-primary: #0F172A !important;
-        --text-secondary: #475569 !important;
-        --card-bg: rgba(255, 255, 255, 0.9) !important;
-        --card-hover-bg: #FFFFFF !important;
-        --card-border: rgba(203, 213, 225, 0.8) !important;
-        --card-shadow: 0 10px 25px -5px rgba(148, 163, 184, 0.2) !important;
-        --input-bg: #FFFFFF !important;
-        --input-border: #CBD5E1 !important;
-        --input-text: #0F172A !important;
-        --tab-bg: #E2E8F0 !important;
-        --tab-text: #475569 !important;
-        --table-bg: #FFFFFF !important;
-        --table-text: #0F172A !important;
-        --table-border: #E2E8F0 !important;
-        --table-header-bg: #F1F5F9 !important;
-        --table-header-text: #0F172A !important;
-        --table-row-hover: rgba(99, 102, 241, 0.08) !important;
-        --dialog-bg: #FFFFFF !important;
-
-        --badge-red-bg: #FEE2E2 !important;
-        --badge-red-text: #DC2626 !important;
-        --badge-red-border: #FCA5A5 !important;
-
-        --badge-green-bg: #D1FAE5 !important;
-        --badge-green-text: #059669 !important;
-        --badge-green-border: #6EE7B7 !important;
-
-        --badge-gray-bg: #F1F5F9 !important;
-        --badge-gray-text: #475569 !important;
-        --badge-gray-border: #CBD5E1 !important;
-    }
-
-    [data-theme="dark"], .stApp[data-theme="dark"], body[data-theme="dark"] {
-        --bg-gradient: radial-gradient(circle at 50% 0%, #1E1B4B 0%, #0F172A 50%, #020617 100%) !important;
-        --text-primary: #F8FAFC !important;
-        --text-secondary: #CBD5E1 !important;
-        --card-bg: rgba(30, 41, 59, 0.6) !important;
-        --card-hover-bg: rgba(30, 41, 59, 0.85) !important;
-        --card-border: rgba(255, 255, 255, 0.12) !important;
-        --card-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5) !important;
-        --input-bg: rgba(15, 23, 42, 0.85) !important;
-        --input-border: rgba(255, 255, 255, 0.2) !important;
-        --input-text: #FFFFFF !important;
-        --tab-bg: rgba(15, 23, 42, 0.6) !important;
-        --tab-text: #CBD5E1 !important;
-        --table-bg: #0F172A !important;
-        --table-text: #F8FAFC !important;
-        --table-border: rgba(255, 255, 255, 0.15) !important;
-        --table-header-bg: #1E293B !important;
-        --table-header-text: #E2E8F0 !important;
-        --table-row-hover: rgba(99, 102, 241, 0.2) !important;
-        --dialog-bg: rgba(15, 23, 42, 0.95) !important;
-
-        --badge-red-bg: rgba(239, 68, 68, 0.2) !important;
-        --badge-red-text: #FCA5A5 !important;
-        --badge-red-border: rgba(239, 68, 68, 0.4) !important;
-
-        --badge-green-bg: rgba(16, 185, 129, 0.2) !important;
-        --badge-green-text: #6EE7B7 !important;
-        --badge-green-border: rgba(16, 185, 129, 0.4) !important;
-
-        --badge-gray-bg: rgba(100, 116, 139, 0.2) !important;
-        --badge-gray-text: #CBD5E1 !important;
-        --badge-gray-border: rgba(100, 116, 139, 0.4) !important;
     }
 
     .stApp {
@@ -674,6 +621,7 @@ if "data_loaded_from_disk" not in st.session_state:
             "Tiền nhà": 3500000.0, "Thực phẩm": 4000000.0, "Điện nước & Mạng": 1000000.0,
             "Giải trí": 1500000.0, "Đi lại": 800000.0, "Khác": 500000.0
         })
+        st.session_state.emergency_fund = float(saved_data.get("emergency_fund", 5000000.0))
         st.session_state.savings_goal = float(saved_data.get("savings_goal", 2960000.0))
         
         logs_raw = saved_data.get("daily_logs", [])
@@ -700,6 +648,8 @@ if "fixed_expenses" not in st.session_state:
         "Tiền nhà": 3500000.0, "Thực phẩm": 4000000.0, "Điện nước & Mạng": 1000000.0,
         "Giải trí": 1500000.0, "Đi lại": 800000.0, "Khác": 500000.0
     }
+if "emergency_fund" not in st.session_state:
+    st.session_state.emergency_fund = 5000000.0
 if "savings_goal" not in st.session_state:
     st.session_state.savings_goal = 2960000.0
 if "daily_logs" not in st.session_state:
@@ -744,12 +694,12 @@ if "inp_log_note" not in st.session_state:
     st.session_state.inp_log_note = ""
 
 # ----------------------------------------------------
-# 8. POP-UP MODAL THIẾT LẬP KHI KHỞI CHẠY
+# 8. POP-UP MODAL THIẾT LẬP KHI KHỞI CHẠY (3 BƯỚC)
 # ----------------------------------------------------
 @st.dialog("⚙️ Thiết Lập Khai Báo Tài Chính", width="large")
 def show_setup_modal():
     if st.session_state.modal_step == 1:
-        st.caption("Bước 1/2: Khai báo Thu nhập & Các khoản chi phí cố định ước tính")
+        st.caption("Bước 1/3: Khai báo Thu nhập & Các khoản chi phí cố định ước tính")
         
         st.text_input(
             "💵 Thu nhập cố định hàng tháng (VNĐ):", 
@@ -789,7 +739,7 @@ def show_setup_modal():
             other_val = parse_amount(st.session_state.inp_other)
             st.caption(f"➔ Số tiền: **{other_val:,.0f} VNĐ** *({num2vi_words(other_val)})*")
 
-        if st.button("Tiếp theo: Đặt mục tiêu tiết kiệm ➡️", use_container_width=True):
+        if st.button("Tiếp theo: Thiết lập Quỹ Khẩn Cấp ➡️", use_container_width=True):
             st.session_state.income = inc_val
             st.session_state.fixed_expenses = {
                 "Tiền nhà": rent_val,
@@ -799,14 +749,40 @@ def show_setup_modal():
                 "Đi lại": trans_val,
                 "Khác": other_val
             }
-            total_exp = sum(st.session_state.fixed_expenses.values())
-            max_possible = max(0.0, st.session_state.income - total_exp)
-            st.session_state.inp_goal = f"{int(max_possible * 0.8):,}"
+            if "inp_emergency" not in st.session_state:
+                st.session_state.inp_emergency = f"{int(st.session_state.get('emergency_fund', 5000000.0)):,}"
             st.session_state.modal_step = 2
             st.rerun()
 
     elif st.session_state.modal_step == 2:
-        st.caption("Bước 2/2: Đặt mục tiêu tích lũy tháng")
+        st.caption("Bước 2/3: Khai báo Quỹ Khẩn Cấp dự phòng")
+        st.info("💡 **Quỹ Khẩn Cấp:** Là số tiền dự phòng không được dùng tới (trừ trường hợp khẩn cấp). Hệ thống sẽ dùng số này làm mốc tham chiếu và hiển thị cảnh báo khi số dư chạm/xuống dưới mức này.")
+
+        st.text_input(
+            "🚨 Hạn mức Quỹ Khẩn Cấp dự phòng (VNĐ):", 
+            key="inp_emergency",
+            on_change=format_money_callback,
+            args=("inp_emergency",)
+        )
+        em_val = parse_amount(st.session_state.inp_emergency)
+        st.caption(f"➔ Mức bảo vệ: **{em_val:,.0f} VNĐ** *({num2vi_words(em_val)})*")
+
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("⬅️ Quay lại", use_container_width=True):
+                st.session_state.modal_step = 1
+                st.rerun()
+        with col2:
+            if st.button("Tiếp theo: Đặt mục tiêu tiết kiệm ➡️", use_container_width=True):
+                st.session_state.emergency_fund = em_val
+                total_exp = sum(st.session_state.fixed_expenses.values())
+                max_possible = max(0.0, st.session_state.income - total_exp)
+                st.session_state.inp_goal = f"{int(max_possible * 0.8):,}"
+                st.session_state.modal_step = 3
+                st.rerun()
+
+    elif st.session_state.modal_step == 3:
+        st.caption("Bước 3/3: Đặt mục tiêu tích lũy tháng")
         total_exp = sum(st.session_state.fixed_expenses.values())
         max_possible = max(0.0, st.session_state.income - total_exp)
 
@@ -827,7 +803,7 @@ def show_setup_modal():
         col1, col2 = st.columns(2)
         with col1:
             if st.button("⬅️ Quay lại", use_container_width=True):
-                st.session_state.modal_step = 1
+                st.session_state.modal_step = 2
                 st.rerun()
         with col2:
             if st.button("Hoàn thành & Vào Dashboard 🚀", use_container_width=True):
@@ -872,6 +848,7 @@ with head_col2:
             st.session_state.inp_ent = f"{int(st.session_state.fixed_expenses.get('Giải trí', 0)):,}"
             st.session_state.inp_trans = f"{int(st.session_state.fixed_expenses.get('Đi lại', 0)):,}"
             st.session_state.inp_other = f"{int(st.session_state.fixed_expenses.get('Khác', 0)):,}"
+            st.session_state.inp_emergency = f"{int(st.session_state.get('emergency_fund', 5000000.0)):,}"
             sync_data()
             st.rerun()
     with btn_c2:
@@ -885,6 +862,7 @@ logged_exp_total = st.session_state.daily_logs["Số tiền"].sum() if not st.se
 grand_total_exp = fixed_exp_total + logged_exp_total
 remaining_balance = st.session_state.income - grand_total_exp
 diff_goal = remaining_balance - st.session_state.savings_goal
+emergency_fund_val = st.session_state.get("emergency_fund", 5000000.0)
 
 m1, m2, m3, m4 = st.columns(4)
 with m1:
@@ -906,13 +884,15 @@ with m2:
     """, unsafe_allow_html=True)
 
 with m3:
+    is_danger = remaining_balance <= emergency_fund_val
+    sub_color = "sub-red" if is_danger else "sub-green"
+    sub_text = f"🚨 Chạm ngưỡng khẩn cấp ({emergency_fund_val:,.0f} đ)" if is_danger else f"🛡️ An toàn (> {emergency_fund_val:,.0f} đ)"
+    
     st.markdown(f"""
     <div class="metric-card">
         <div class="metric-title">SỐ DƯ CÒN LẠI</div>
         <div class="metric-value">{remaining_balance:,.0f} <span style="font-size:1.1rem; color:var(--text-secondary);">đ</span></div>
-        <div class="metric-sub {'sub-green' if remaining_balance >= 0 else 'sub-red'}">
-            {'✅ Khả dụng' if remaining_balance >= 0 else '⚠️ Cảnh báo thâm hụt'}
-        </div>
+        <div class="metric-sub {sub_color}">{sub_text}</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -928,6 +908,14 @@ with m4:
     """, unsafe_allow_html=True)
 
 st.write("")
+
+# THÔNG BÁO CẢNH BÁO KHI SỐ DƯ CHẠM NGUỠNG KHẨN CẤP
+if remaining_balance <= emergency_fund_val:
+    st.error(
+        f"🚨 **CẢNH BÁO TÀI CHÍNH NGUY HIỂM:** Số dư hiện tại của bạn (**{remaining_balance:,.0f} VNĐ**) "
+        f"đã chạm/xuống dưới **Quỹ Khẩn Cấp ({emergency_fund_val:,.0f} VNĐ)**! "
+        f"Vui lòng hạn chế tối đa các khoản chi không cấp thiết."
+    )
 
 if st.session_state.savings_goal > 0:
     progress_ratio = min(max(remaining_balance / st.session_state.savings_goal, 0.0), 1.0)
@@ -1015,7 +1003,7 @@ with tab_stats:
         df_chart2 = pd.DataFrame(chart2_list)
 
         color_map = {
-            "Số dư còn lại": "#10B981",
+            "Số dư còn lại": "#10B981" if remaining_balance > emergency_fund_val else "#EF4444",
             "Chi phát sinh thực tế": "#FB7185",
         }
 
@@ -1029,7 +1017,7 @@ with tab_stats:
             color_discrete_sequence=['#6366F1', '#8B5CF6', '#F59E0B', '#38BDF8', '#10B981', '#EC4899', '#F97316']
         )
 
-        bal_color = "#10B981" if remaining_balance >= 0 else "#EF4444"
+        bal_color = "#10B981" if remaining_balance > emergency_fund_val else "#EF4444"
         bal_label = "SỐ DƯ CÒN LẠI" if remaining_balance >= 0 else "THÂM HỤT"
 
         fig2.update_traces(
@@ -1067,8 +1055,8 @@ with tab_stats:
 
     with col_form:
         st.markdown("##### ✍️ Ghi nhận khoản chi thực tế")
-        st.date_input("Ngày giao dịch", key="inp_log_date")
-        st.selectbox("Danh mục", list(st.session_state.fixed_expenses.keys()), key="inp_log_cat")
+        log_date = st.date_input("Ngày giao dịch", key="inp_log_date")
+        log_cat = st.selectbox("Danh mục", list(st.session_state.fixed_expenses.keys()), key="inp_log_cat")
         
         st.text_input(
             "Số tiền (VNĐ)",
@@ -1079,9 +1067,20 @@ with tab_stats:
         log_amt = parse_amount(st.session_state.inp_log_amt)
         st.caption(f"➔ Số tiền: **{log_amt:,.0f} VNĐ** *({num2vi_words(log_amt)})*")
         
-        st.text_input("Ghi chú khoản chi", key="inp_log_note", placeholder="VD: Mua thực phẩm siêu thị")
+        log_note = st.text_input("Ghi chú khoản chi", key="inp_log_note", placeholder="VD: Mua thực phẩm siêu thị")
         
-        st.button("➕ Thêm khoản chi", use_container_width=True, on_click=add_expense_callback)
+        if st.button("➕ Thêm khoản chi", use_container_width=True):
+            if log_amt > 0:
+                future_bal = remaining_balance - log_amt
+                em_fund = st.session_state.get("emergency_fund", 5000000.0)
+                
+                # BẮT KIỂM TRA: Nếu số dư sau khoản chi <= Quỹ khẩn cấp -> Mở Modal bắt xác nhận
+                if future_bal <= em_fund:
+                    confirm_emergency_expense_modal(log_amt, log_date, log_cat, log_note, future_bal, em_fund)
+                else:
+                    add_expense_action(log_date, log_cat, log_amt, log_note)
+                    st.success("Đã ghi nhận khoản chi thành công!")
+                    st.rerun()
 
     st.divider()
 
@@ -1140,7 +1139,6 @@ with tab_stats:
                 f"Mục #{idx+1} | {row['Ngày']} | {row['Danh mục']} | {row['Số tiền']:,.0f} VNĐ ({row['Ghi chú'] or 'Không ghi chú'})": idx
                 for idx, row in st.session_state.daily_logs.iterrows()
             }
-            # Lưu tạm options_dict vào session state để callback truy cập
             st.session_state["current_options_dict"] = options_dict
 
             selected_dropdown_items = st.multiselect(
@@ -1455,13 +1453,13 @@ with tab_ai:
         exp_ratio = (grand_total_exp / st.session_state.income * 100) if st.session_state.income > 0 else 0
         
         if "phân tích" in prompt_lower or "thu chi" in prompt_lower:
-            ai_reply = f"""📊 **Báo cáo phân tích tài chính ({st.session_state.current_user}):**\n- **Tổng thu nhập:** `{st.session_state.income:,.0f} VNĐ`\n- **Tổng chi tiêu:** `{grand_total_exp:,.0f} VNĐ` (Chiếm **{exp_ratio:.1f}%** thu nhập)\n- **Số dư khả dụng:** `{remaining_balance:,.0f} VNĐ`\n\n💡 **Đánh giá:** {"⚠️ Tỷ lệ chi tiêu của bạn đang khá cao (>70%). Nên kiểm soát thêm các khoản phát sinh ngoài kế hoạch." if exp_ratio > 70 else "✅ Tỷ lệ chi tiêu của bạn rất lành mạnh và an toàn."}"""
+            ai_reply = f"""📊 **Báo cáo phân tích tài chính ({st.session_state.current_user}):**\n- **Tổng thu nhập:** `{st.session_state.income:,.0f} VNĐ`\n- **Tổng chi tiêu:** `{grand_total_exp:,.0f} VNĐ` (Chiếm **{exp_ratio:.1f}%** thu nhập)\n- **Số dư khả dụng:** `{remaining_balance:,.0f} VNĐ`\n- **Quỹ khẩn cấp bảo vệ:** `{emergency_fund_val:,.0f} VNĐ`\n\n💡 **Đánh giá:** {"⚠️ Tỷ lệ chi tiêu của bạn đang khá cao (>70%). Hãy kiểm soát để giữ an toàn cho Quỹ khẩn cấp!" if exp_ratio > 70 else "✅ Tỷ lệ chi tiêu của bạn rất lành mạnh và an toàn."}"""
         
         elif "tiết kiệm" in prompt_lower or "mục tiêu" in prompt_lower:
             ai_reply = f"""💡 **Chiến lược đạt mục tiêu tiết kiệm:**\n- **Mục tiêu tháng:** `{st.session_state.savings_goal:,.0f} VNĐ`\n- **Số dư hiện tại:** `{remaining_balance:,.0f} VNĐ`\n- **Tình trạng:** {'🎉 Bạn đã xuất sắc hoàn thành mục tiêu tích lũy!' if diff_goal >= 0 else f'⚠️ Còn thiếu **{abs(diff_goal):,.0f} VNĐ**. Hãy ưu tiên trích ngay 20% thu nhập đầu tháng vào quỹ tiết kiệm!'}"""
 
         elif "mua" in prompt_lower or "hạn mức" in prompt_lower:
-            ai_reply = f"""🛒 **Tư vấn hạn mức mua sắm:**\nSố dư khả dụng của bạn là **{remaining_balance:,.0f} VNĐ**. \n- Khoản mua sắm **dưới {remaining_balance * 0.15:,.0f} VNĐ** (15% số dư) nằm trong hạn mức an toàn.\n- Nếu lớn hơn, hãy áp dụng quy tắc **"Hoãn 48 tiếng"** để tránh mua sắm cảm xúc!"""
+            ai_reply = f"""🛒 **Tư vấn hạn mức mua sắm:**\nSố dư khả dụng của bạn là **{remaining_balance:,.0f} VNĐ** (Quỹ khẩn cấp giữ mức **{emergency_fund_val:,.0f} VNĐ**).\n- Khoản mua sắm **dưới {max(0.0, remaining_balance - emergency_fund_val) * 0.2:,.0f} VNĐ** nằm trong hạn mức an toàn.\n- Tránh mua các khoản vượt quá mức dôi dư để không vi phạm Quỹ Khẩn Cấp!"""
 
         else:
             ai_reply = f"""Tôi đã ghi nhận thắc mắc của bạn! Dựa trên ngân sách khả dụng **{remaining_balance:,.0f} VNĐ**, hãy thử chọn các gợi ý phía trên hoặc hỏi cụ thể hơn để tôi hỗ trợ nhé!"""
