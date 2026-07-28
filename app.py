@@ -697,7 +697,28 @@ with tab_history:
     
     with h_col1:
         st.markdown("###### 📝 Nhập / Chỉnh sửa dữ liệu tháng cũ")
-        hist_month = st.date_input("Chọn tháng cần lưu/chỉnh sửa:", value=datetime.now()).strftime("%Y-%m")
+        
+        # Hộp chọn riêng Năm và Tháng thay cho st.date_input
+        now_dt = datetime.now()
+        year_options = list(range(now_dt.year - 3, now_dt.year + 4))
+        
+        m_col1, m_col2 = st.columns(2)
+        with m_col1:
+            sel_year = st.selectbox(
+                "Chọn năm:", 
+                year_options, 
+                index=year_options.index(now_dt.year),
+                key="sel_hist_year"
+            )
+        with m_col2:
+            sel_month = st.selectbox(
+                "Chọn tháng:", 
+                [f"{i:02d}" for i in range(1, 13)], 
+                index=now_dt.month - 1,
+                key="sel_hist_month"
+            )
+            
+        hist_month = f"{sel_year}-{sel_month}"
         
         # Lấy dữ liệu cũ nếu có
         existing_data = st.session_state.monthly_history.get(hist_month, {
@@ -706,7 +727,7 @@ with tab_history:
             "savings_goal": 3000000.0
         })
 
-        # Định dạng tiền tệ chuỗi với dấu phẩy phân cách hàng nghìn (không có phần thập phân)
+        # Định dạng tiền tệ chuỗi với dấu phẩy phân cách hàng nghìn
         if f"h_inc_str_{hist_month}" not in st.session_state:
             st.session_state[f"h_inc_str_{hist_month}"] = f"{int(existing_data['income']):,}"
 
