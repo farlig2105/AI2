@@ -67,7 +67,7 @@ def add_expense_callback():
         st.session_state.inp_log_amt = "0"
         st.session_state.inp_log_note = ""
 
-# 2. Tiêm CSS Tùy Biến (Sửa lỗi Icon Font & Tối ưu UI)
+# 2. Tiêm CSS Tùy Biến (Thêm hiệu ứng Glow khi rê chuột & Tối ưu UI)
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
@@ -79,6 +79,16 @@ st.markdown("""
     .stApp {
         background: radial-gradient(circle at 50% 0%, #1E1B4B 0%, #0F172A 50%, #020617 100%) !important;
         color: #F8FAFC;
+    }
+
+    /* Hiệu ứng Bao Sáng (Glow) khi di chuột vào phần bánh của biểu đồ Plotly */
+    .js-plotly-plot .plotly .slice path {
+        transition: filter 0.3s ease, opacity 0.3s ease !important;
+    }
+    .js-plotly-plot .plotly .slice:hover path {
+        filter: drop-shadow(0px 0px 12px rgba(129, 140, 248, 0.95)) drop-shadow(0px 0px 20px rgba(99, 102, 241, 0.7)) !important;
+        opacity: 0.95 !important;
+        cursor: pointer !important;
     }
 
     div[data-testid="stDialog"] > div:first-child {
@@ -482,17 +492,11 @@ with tab_stats:
             textposition='inside',
             textinfo='percent',
             insidetextfont=dict(size=12, color='#FFFFFF', family="Plus Jakarta Sans"),
-            hovertemplate=(
-                "<div style='padding: 6px; border-radius: 8px;'>"
-                "<b style='font-size: 14px; color: #818CF8;'>%{label}</b><br>"
-                "💵 Số tiền: <b>%{value:,.0f} VNĐ</b><br>"
-                "📈 Tỷ lệ: <b>%{percent}</b>"
-                "</div><extra></extra>"
-            ),
+            hovertemplate="<b>%{label}</b><br>💵 Số tiền: <b>%{value:,.0f} VNĐ</b><br>📈 Tỷ lệ: <b>%{percent}</b><extra></extra>",
             marker=dict(line=dict(color='#0F172A', width=3)),
             hoverlabel=dict(
-                bgcolor="rgba(15, 23, 42, 0.95)",
-                bordercolor="#6366F1",
+                bgcolor="#0F172A",
+                bordercolor="#818CF8",
                 font_size=13,
                 font_family="Plus Jakarta Sans",
                 font_color="#F8FAFC"
@@ -563,16 +567,10 @@ with tab_stats:
             textposition='inside',
             textinfo='percent',
             insidetextfont=dict(size=12, color='#FFFFFF', family="Plus Jakarta Sans"),
-            hovertemplate=(
-                "<div style='padding: 6px; border-radius: 8px;'>"
-                f"<b style='font-size: 14px; color: {bal_color};'>%{{label}}</b><br>"
-                "💵 Số tiền: <b>%{value:,.0f} VNĐ</b><br>"
-                "📈 Tỷ lệ: <b>%{percent}</b>"
-                "</div><extra></extra>"
-            ),
+            hovertemplate="<b>%{label}</b><br>💵 Số tiền: <b>%{value:,.0f} VNĐ</b><br>📈 Tỷ lệ: <b>%{percent}</b><extra></extra>",
             marker=dict(line=dict(color='#0F172A', width=3)),
             hoverlabel=dict(
-                bgcolor="rgba(15, 23, 42, 0.95)",
+                bgcolor="#0F172A",
                 bordercolor=bal_color,
                 font_size=13,
                 font_family="Plus Jakarta Sans",
