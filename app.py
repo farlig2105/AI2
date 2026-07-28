@@ -83,6 +83,16 @@ st.markdown("""
         color: #F8FAFC;
     }
 
+    /* Streamlit Dataframe Custom Styling */
+    div[data-testid="stDataFrame"] {
+        background: rgba(15, 23, 42, 0.65) !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        border-radius: 18px !important;
+        padding: 10px !important;
+        backdrop-filter: blur(16px) !important;
+        box-shadow: 0 20px 30px rgba(0, 0, 0, 0.35) !important;
+    }
+
     /* Plotly Glow & Hover */
     .js-plotly-plot .plotly .slice path, .js-plotly-plot .plotly .bars path {
         transition: filter 0.3s ease, opacity 0.3s ease !important;
@@ -723,15 +733,92 @@ with tab_stats:
         st.button("➕ Thêm khoản chi", use_container_width=True, on_click=add_expense_callback)
 
     st.divider()
-    st.markdown("##### 📋 Nhật ký chi tiêu thực tế trong tháng")
+
+    # ----------------------------------------------------
+    # BẢNG NHẬT KÝ CHI TIÊU & BỘ CÔNG CỤ CHỌN XÓA DỮ LIỆU NHẬP NHẦM
+    # ----------------------------------------------------
+    log_count = len(st.session_state.daily_logs)
+    head_log_a, head_log_b = st.columns([2, 1])
+    with head_log_a:
+        st.markdown(f"##### 📋 Nhật ký chi tiêu thực tế trong tháng ({log_count} giao dịch)")
+    with head_log_b:
+        if log_count > 0:
+            st.markdown(f"<div style='text-align: right; color: #34D399; font-weight: 700; font-size: 1.05rem;'>💰 Tổng chi phát sinh: {logged_exp_total:,.0f} VNĐ</div>", unsafe_allow_html=True)
+
     if not st.session_state.daily_logs.empty:
-        display_df = st.session_state.daily_logs.copy()
-        display_df["Số tiền (VNĐ)"] = display_df["Số tiền"].apply(lambda x: f"{int(x):,} VNĐ")
-        display_df = display_df[["Ngày", "Danh mục", "Số tiền (VNĐ)", "Ghi chú"]]
-        st.dataframe(
-            display_df, 
-            use_container_width=True
-        )
+        cat_icons = {
+            "Tiền nhà": "🏠",
+            "Thực phẩm": "🍲",
+            "Điện nước & Mạng": "⚡",
+            "Giải trí": "🎮",
+            "Đi lại": "🚗",
+            "Khác": "📦"
+        }
+
+        # Tạo bản sao dữ liệu hiển thị đã định dạng đẹp mắt
+        df_display = st.session_state.daily_logs.copy()
+        df_display.reset_index(inplace=True)
+        df_display.rename(columns={"index": "STT"}, inplace=True)
+        df_display["STT"] = df_display["STT"] + 1
+        
+        # Thêm biểu tượng Icon và định dạng hiển thị tiền
+        df_display["Danh mục hiển thị"] = df_display["Danh mục"].apply(lambda c: f"{cat_icons.get(c, '📌')} {c}")
+        df_display["Số tiền hiển thị"] = df_display["Số tiền"].apply(lambda x: f"{int(x):,} VNĐ")
+
+        df_show = df_display[["STT", "Ngày", "Danh mục hiển thị", "Số tiền hiển thị", "Ghi chú"]].copy()
+        df_show.columns = ["STT", "📅 Ngày", "🏷️ Danh mục", "💵 Số tiền", "📝 Ghi chú"]
+
+        # Hiển thị bảng Streamlit hiện đại có tính năng chọn hàng
+        selected_rows = []
+        try:
+            event = st.dataframe(
+                df_show,
+                use_container_width=True,
+                hide_index=True,
+                on_select="rerun",
+                selection_mode="multi-row",
+                key="daily_logs_table_grid"
+            )
+            if hasattr(event, "selection") and event.selection:
+                selected_rows = event.selection.get("rows", [])
+        except Exception:
+            selected_rows = []
+
+        st.caption("💡 *Mẹo: Tích chọn một hoặc nhiều dòng trực tiếp trên bảng trên hoặc chọn từ danh sách thả xuống dưới đây để xóa dữ liệu nhập sai.*")
+
+        # Khung công cụ xóa dòng chọn
+        st.write("")
+        col_del_action, col_del_select = st.columns([1, 1.3])
+        
+        with col_del_action:
+            if selected_rows:
+                st.warning(f"📌 Bạn đang chọn **{len(selected_rows)}** khoản chi trên bảng.")
+                if st.button("🗑️ Xóa các mục đã chọn trên bảng", type="primary", use_container_width=True):
+                    st.session_state.daily_logs = st.session_state.daily_logs.drop(
+                        st.session_state.daily_logs.index[selected_rows]
+                    ).reset_index(drop=True)
+                    st.success("✅ Đã xóa thành công các khoản chi đã chọn!")
+                    st.rerun()
+
+        with col_del_select:
+            # Danh sách chọn xóa thủ công bổ sung
+            options_dict = {
+                f"Mục #{idx+1} | {row['Ngày']} | {row['Danh mục']} | {row['Số tiền']:,.0f} VNĐ ({row['Ghi chú'] or 'Khong ghi chu'})": idx
+                for idx, row in st.session_state.daily_logs.iterrows()
+            }
+            selected_dropdown_items = st.multiselect(
+                "🎯 Hoặc chọn khoản chi muốn xóa theo danh sách:",
+                options=list(options_dict.keys()),
+                placeholder="Chọn một hoặc nhiều giao dịch nhập nhầm...",
+                key="multiselect_delete_logs"
+            )
+            
+            if selected_dropdown_items:
+                if st.button("🗑️ Xóa các mục đã chọn trong danh sách", use_container_width=True):
+                    indices_to_drop = [options_dict[item] for item in selected_dropdown_items]
+                    st.session_state.daily_logs = st.session_state.daily_logs.drop(indices_to_drop).reset_index(drop=True)
+                    st.success("✅ Đã xóa thành công khoản chi được chọn!")
+                    st.rerun()
     else:
         st.info("Chưa có phát sinh chi tiêu nào được ghi nhận trong tháng này.")
 
@@ -910,7 +997,7 @@ with tab_history:
 
     st.divider()
     
-    # --- BIỂU ĐỒ XU HƯỚNG TỔNG TÀI CHÍNH VỚI CHỮ TO RÕ NÉT ---
+    # --- BIỂU ĐỒ XU HƯỚNG TỔNG TÀI CHÍNH ---
     st.markdown("##### 📈 Biến động Thu nhập - Chi tiêu - Số dư qua thời gian")
     st.caption("💡 *Di chuột lên bất kỳ mốc thời gian nào để xem bảng tổng hợp thông tin chi tiết tại điểm đó.*")
     
@@ -1008,7 +1095,7 @@ with tab_history:
 
     st.divider()
 
-    # --- BẢNG BÁO CÁO GLASSMORPHISM UI HOÀN CHỈNH ---
+    # --- BẢNG BÁO CÁO GLASSMORPHISM UI ---
     col_tbl_title, col_tbl_select = st.columns([2, 1])
     with col_tbl_title:
         st.markdown(f"##### 📊 Bảng so sánh chi tiêu chi tiết ({current_month_str} vs {st.session_state.comp_month_selected})")
@@ -1026,17 +1113,7 @@ with tab_history:
     if tbl_comp_month:
         cur_data = st.session_state.monthly_history[current_month_str]
         prev_data = st.session_state.monthly_history.get(tbl_comp_month, cur_data)
-        
-        cat_icons = {
-            "Tiền nhà": "🏠",
-            "Thực phẩm": "🍲",
-            "Điện nước & Mạng": "⚡",
-            "Giải trí": "🎮",
-            "Đi lại": "🚗",
-            "Khác": "📦"
-        }
 
-        # Xây dựng Bảng HTML UI cao cấp không chứa thụt lề đầu dòng thừa
         html_table = f"""<div class="custom-table-container">
 <table class="custom-table">
 <thead>
