@@ -171,45 +171,56 @@ def add_expense_callback():
         sync_data()
 
 # ----------------------------------------------------
-# 5. TIÊM CSS TÙY BIẾN (TỐI ƯU CẢ DARK & LIGHT MODE)
+# 5. TIÊM CSS TÙY BIẾN (TỐI ƯU HOÀN HẢO LIGHT & DARK MODE)
 # ----------------------------------------------------
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
     
+    /* MẶC ĐỊNH & HỆ THỐNG */
     :root {
-        /* Mặc định: Light Mode */
-        --bg-gradient: radial-gradient(circle at 50% 0%, #EEF2FF 0%, #F8FAFC 50%, #E2E8F0 100%);
+        --bg-gradient: linear-gradient(135deg, #F8FAFC 0%, #EEF2FF 50%, #E2E8F0 100%);
         --text-primary: #0F172A;
         --text-secondary: #475569;
-        --card-bg: rgba(255, 255, 255, 0.8);
-        --card-hover-bg: rgba(255, 255, 255, 0.98);
-        --card-border: rgba(0, 0, 0, 0.08);
-        --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
-        --input-bg: rgba(255, 255, 255, 0.95);
-        --input-border: rgba(0, 0, 0, 0.15);
+        --card-bg: rgba(255, 255, 255, 0.85);
+        --card-hover-bg: #FFFFFF;
+        --card-border: rgba(203, 213, 225, 0.6);
+        --card-shadow: 0 10px 25px -5px rgba(148, 163, 184, 0.18);
+        --input-bg: #FFFFFF;
+        --input-border: #CBD5E1;
         --input-text: #0F172A;
-        --tab-bg: rgba(241, 245, 249, 0.85);
+        --tab-bg: #E2E8F0;
         --tab-text: #475569;
-        --table-bg: rgba(255, 255, 255, 0.88);
-        --table-border: rgba(0, 0, 0, 0.08);
-        --table-header-bg: linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(139, 92, 246, 0.08) 100%);
+        --table-bg: #FFFFFF;
+        --table-border: #E2E8F0;
+        --table-header-bg: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.06) 100%);
         --table-header-text: #1E293B;
-        --table-row-hover: rgba(99, 102, 241, 0.08);
-        --dialog-bg: rgba(255, 255, 255, 0.96);
+        --table-row-hover: rgba(99, 102, 241, 0.05);
+        --dialog-bg: #FFFFFF;
+
+        --badge-red-bg: #FEE2E2;
+        --badge-red-text: #DC2626;
+        --badge-red-border: #FCA5A5;
+
+        --badge-green-bg: #D1FAE5;
+        --badge-green-text: #059669;
+        --badge-green-border: #6EE7B7;
+
+        --badge-gray-bg: #F1F5F9;
+        --badge-gray-text: #475569;
+        --badge-gray-border: #CBD5E1;
     }
 
     @media (prefers-color-scheme: dark) {
         :root {
-            /* Tự động: Dark Mode theo Hệ Thống */
             --bg-gradient: radial-gradient(circle at 50% 0%, #1E1B4B 0%, #0F172A 50%, #020617 100%);
             --text-primary: #F8FAFC;
             --text-secondary: #CBD5E1;
-            --card-bg: rgba(30, 41, 59, 0.45);
-            --card-hover-bg: rgba(30, 41, 59, 0.7);
-            --card-border: rgba(255, 255, 255, 0.08);
+            --card-bg: rgba(30, 41, 59, 0.5);
+            --card-hover-bg: rgba(30, 41, 59, 0.75);
+            --card-border: rgba(255, 255, 255, 0.1);
             --card-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5);
-            --input-bg: rgba(15, 23, 42, 0.7);
+            --input-bg: rgba(15, 23, 42, 0.75);
             --input-border: rgba(255, 255, 255, 0.18);
             --input-text: #FFFFFF;
             --tab-bg: rgba(15, 23, 42, 0.6);
@@ -220,59 +231,102 @@ st.markdown("""
             --table-header-text: #E2E8F0;
             --table-row-hover: rgba(99, 102, 241, 0.18);
             --dialog-bg: rgba(15, 23, 42, 0.95);
+
+            --badge-red-bg: rgba(239, 68, 68, 0.18);
+            --badge-red-text: #FCA5A5;
+            --badge-red-border: rgba(239, 68, 68, 0.35);
+
+            --badge-green-bg: rgba(16, 185, 129, 0.18);
+            --badge-green-text: #6EE7B7;
+            --badge-green-border: rgba(16, 185, 129, 0.35);
+
+            --badge-gray-bg: rgba(100, 116, 139, 0.18);
+            --badge-gray-text: #CBD5E1;
+            --badge-gray-border: rgba(100, 116, 139, 0.35);
         }
     }
 
-    /* Đảm bảo tương thích khi người dùng chọn thủ công trong Streamlit Settings */
-    [data-theme="light"], [data-theme="light"] .stApp {
-        --bg-gradient: radial-gradient(circle at 50% 0%, #EEF2FF 0%, #F8FAFC 50%, #E2E8F0 100%);
-        --text-primary: #0F172A;
-        --text-secondary: #475569;
-        --card-bg: rgba(255, 255, 255, 0.8);
-        --card-hover-bg: rgba(255, 255, 255, 0.98);
-        --card-border: rgba(0, 0, 0, 0.08);
-        --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
-        --input-bg: rgba(255, 255, 255, 0.95);
-        --input-border: rgba(0, 0, 0, 0.15);
-        --input-text: #0F172A;
-        --tab-bg: rgba(241, 245, 249, 0.85);
-        --tab-text: #475569;
-        --table-bg: rgba(255, 255, 255, 0.88);
-        --table-border: rgba(0, 0, 0, 0.08);
-        --table-header-bg: linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(139, 92, 246, 0.08) 100%);
-        --table-header-text: #1E293B;
-        --table-row-hover: rgba(99, 102, 241, 0.08);
-        --dialog-bg: rgba(255, 255, 255, 0.96);
+    /* ÉP BUỘC KHI CHỌN LIGHT MODE TRÊN MENU STREAMLIT */
+    [data-theme="light"], .stApp[data-theme="light"], body[data-theme="light"] {
+        --bg-gradient: linear-gradient(135deg, #F8FAFC 0%, #EEF2FF 50%, #E2E8F0 100%) !important;
+        --text-primary: #0F172A !important;
+        --text-secondary: #475569 !important;
+        --card-bg: rgba(255, 255, 255, 0.85) !important;
+        --card-hover-bg: #FFFFFF !important;
+        --card-border: rgba(203, 213, 225, 0.6) !important;
+        --card-shadow: 0 10px 25px -5px rgba(148, 163, 184, 0.18) !important;
+        --input-bg: #FFFFFF !important;
+        --input-border: #CBD5E1 !important;
+        --input-text: #0F172A !important;
+        --tab-bg: #E2E8F0 !important;
+        --tab-text: #475569 !important;
+        --table-bg: #FFFFFF !important;
+        --table-border: #E2E8F0 !important;
+        --table-header-bg: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.06) 100%) !important;
+        --table-header-text: #1E293B !important;
+        --table-row-hover: rgba(99, 102, 241, 0.05) !important;
+        --dialog-bg: #FFFFFF !important;
+
+        --badge-red-bg: #FEE2E2 !important;
+        --badge-red-text: #DC2626 !important;
+        --badge-red-border: #FCA5A5 !important;
+
+        --badge-green-bg: #D1FAE5 !important;
+        --badge-green-text: #059669 !important;
+        --badge-green-border: #6EE7B7 !important;
+
+        --badge-gray-bg: #F1F5F9 !important;
+        --badge-gray-text: #475569 !important;
+        --badge-gray-border: #CBD5E1 !important;
     }
 
-    [data-theme="dark"], [data-theme="dark"] .stApp {
-        --bg-gradient: radial-gradient(circle at 50% 0%, #1E1B4B 0%, #0F172A 50%, #020617 100%);
-        --text-primary: #F8FAFC;
-        --text-secondary: #CBD5E1;
-        --card-bg: rgba(30, 41, 59, 0.45);
-        --card-hover-bg: rgba(30, 41, 59, 0.7);
-        --card-border: rgba(255, 255, 255, 0.08);
-        --card-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5);
-        --input-bg: rgba(15, 23, 42, 0.7);
-        --input-border: rgba(255, 255, 255, 0.18);
-        --input-text: #FFFFFF;
-        --tab-bg: rgba(15, 23, 42, 0.6);
-        --tab-text: #CBD5E1;
-        --table-bg: rgba(15, 23, 42, 0.65);
-        --table-border: rgba(255, 255, 255, 0.12);
-        --table-header-bg: linear-gradient(135deg, rgba(99, 102, 241, 0.35) 0%, rgba(139, 92, 246, 0.25) 100%);
-        --table-header-text: #E2E8F0;
-        --table-row-hover: rgba(99, 102, 241, 0.18);
-        --dialog-bg: rgba(15, 23, 42, 0.95);
-    }
+    /* ÉP BUỘC KHI CHỌN DARK MODE TRÊN MENU STREAMLIT */
+    [data-theme="dark"], .stApp[data-theme="dark"], body[data-theme="dark"] {
+        --bg-gradient: radial-gradient(circle at 50% 0%, #1E1B4B 0%, #0F172A 50%, #020617 100%) !important;
+        --text-primary: #F8FAFC !important;
+        --text-secondary: #CBD5E1 !important;
+        --card-bg: rgba(30, 41, 59, 0.5) !important;
+        --card-hover-bg: rgba(30, 41, 59, 0.75) !important;
+        --card-border: rgba(255, 255, 255, 0.1) !important;
+        --card-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5) !important;
+        --input-bg: rgba(15, 23, 42, 0.75) !important;
+        --input-border: rgba(255, 255, 255, 0.18) !important;
+        --input-text: #FFFFFF !important;
+        --tab-bg: rgba(15, 23, 42, 0.6) !important;
+        --tab-text: #CBD5E1 !important;
+        --table-bg: rgba(15, 23, 42, 0.65) !important;
+        --table-border: rgba(255, 255, 255, 0.12) !important;
+        --table-header-bg: linear-gradient(135deg, rgba(99, 102, 241, 0.35) 0%, rgba(139, 92, 246, 0.25) 100%) !important;
+        --table-header-text: #E2E8F0 !important;
+        --table-row-hover: rgba(99, 102, 241, 0.18) !important;
+        --dialog-bg: rgba(15, 23, 42, 0.95) !important;
 
-    .stApp, .stApp p, .stApp div:not([class*="material"]), .stApp button, .stApp input, .stApp select, .stApp label {
-        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+        --badge-red-bg: rgba(239, 68, 68, 0.18) !important;
+        --badge-red-text: #FCA5A5 !important;
+        --badge-red-border: rgba(239, 68, 68, 0.35) !important;
+
+        --badge-green-bg: rgba(16, 185, 129, 0.18) !important;
+        --badge-green-text: #6EE7B7 !important;
+        --badge-green-border: rgba(16, 185, 129, 0.35) !important;
+
+        --badge-gray-bg: rgba(100, 116, 139, 0.18) !important;
+        --badge-gray-text: #CBD5E1 !important;
+        --badge-gray-border: rgba(100, 116, 139, 0.35) !important;
     }
 
     .stApp {
         background: var(--bg-gradient) !important;
         color: var(--text-primary) !important;
+        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
+    }
+
+    /* Đảm bảo toàn bộ chữ tiêu đề, đoạn văn có độ tương phản chuẩn */
+    h1, h2, h3, h4, h5, h6, .stMarkdown, .stMarkdown p, .stMarkdown span {
+        color: var(--text-primary) !important;
+    }
+
+    .stCaption, [data-testid="stCaptionContainer"] {
+        color: var(--text-secondary) !important;
     }
 
     /* FORM ĐĂNG NHẬP / ĐĂNG KÝ */
@@ -287,40 +341,47 @@ st.markdown("""
     }
 
     .auth-sub {
-        color: var(--text-secondary);
+        color: var(--text-secondary) !important;
         font-size: 1.2rem;
         font-weight: 600;
         margin-bottom: 20px;
     }
 
-    /* Nhãn tên ô nhập liệu */
-    div[data-testid="stTextInput"] label, div[data-testid="stSelectbox"] label, div[data-testid="stDateInput"] label {
-        font-size: 1.08rem !important;
+    /* NHÃN & Ô NHẬP LIỆU */
+    div[data-testid="stTextInput"] label, 
+    div[data-testid="stSelectbox"] label, 
+    div[data-testid="stDateInput"] label,
+    div[data-testid="stNumberInput"] label {
+        font-size: 1.05rem !important;
         font-weight: 700 !important;
         color: var(--text-primary) !important;
-        margin-bottom: 8px !important;
+        margin-bottom: 6px !important;
     }
 
-    /* Khung nhập liệu */
-    div[data-baseweb="input"] input {
-        font-size: 1.1rem !important;
-        padding: 12px 14px !important;
+    div[data-baseweb="input"] input, 
+    div[data-baseweb="select"] input,
+    div[data-baseweb="select"] div {
+        font-size: 1.05rem !important;
         color: var(--input-text) !important;
     }
 
-    div[data-baseweb="input"] {
-        border-radius: 14px !important;
+    div[data-baseweb="input"], 
+    div[data-baseweb="select"] > div {
+        border-radius: 12px !important;
         background-color: var(--input-bg) !important;
         border: 1px solid var(--input-border) !important;
         transition: all 0.25s ease !important;
     }
 
-    div[data-baseweb="input"]:focus-within {
-        border-color: #6366F1 !important;
-        box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3) !important;
+    ul[data-baseweb="menu"] {
+        background-color: var(--dialog-bg) !important;
+        border: 1px solid var(--card-border) !important;
+    }
+    ul[data-baseweb="menu"] li {
+        color: var(--text-primary) !important;
     }
 
-    /* Tab Đăng nhập / Đăng ký */
+    /* TAB CHÍNH */
     div[data-baseweb="tab-list"] {
         background: var(--tab-bg) !important;
         backdrop-filter: blur(12px) !important;
@@ -334,17 +395,14 @@ st.markdown("""
 
     button[data-baseweb="tab"] {
         flex: 1 !important;
-        height: 56px !important;
+        height: 52px !important;
         border-radius: 12px !important;
         border: none !important;
         background: transparent !important;
         color: var(--tab-text) !important;
         font-weight: 700 !important;
-        font-size: 1.15rem !important;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
+        font-size: 1.05rem !important;
+        transition: all 0.25s ease !important;
     }
 
     button[data-baseweb="tab"]:hover {
@@ -355,27 +413,27 @@ st.markdown("""
     button[data-baseweb="tab"][aria-selected="true"] {
         background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%) !important;
         color: #FFFFFF !important;
-        box-shadow: 0 8px 20px -4px rgba(99, 102, 241, 0.5) !important;
+        box-shadow: 0 6px 18px -4px rgba(99, 102, 241, 0.4) !important;
     }
 
     div[data-baseweb="tab-highlight"], div[data-baseweb="tab-border"] {
         display: none !important;
     }
 
-    /* Nút bấm (Button) */
+    /* NÚT BẤM (BUTTON) */
     .stButton > button {
-        border-radius: 14px !important;
+        border-radius: 12px !important;
         background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%) !important;
-        color: white !important;
+        color: #FFFFFF !important;
         border: none !important;
         font-weight: 700 !important;
-        font-size: 1.1rem !important;
-        padding: 0.8rem 1.5rem !important;
+        font-size: 1.05rem !important;
+        padding: 0.75rem 1.4rem !important;
         transition: all 0.25s ease !important;
     }
     .stButton > button:hover {
         transform: translateY(-2px);
-        box-shadow: 0 10px 22px rgba(99, 102, 241, 0.35) !important;
+        box-shadow: 0 8px 20px rgba(99, 102, 241, 0.35) !important;
     }
 
     div[data-testid="stDataFrame"] {
@@ -387,16 +445,12 @@ st.markdown("""
         box-shadow: var(--card-shadow) !important;
     }
 
-    div[data-testid="stDialog"] > div:first-child {
-        backdrop-filter: blur(20px) !important;
-        background-color: rgba(0, 0, 0, 0.4) !important;
-    }
-
     div[role="dialog"] {
         border-radius: 24px !important;
         background: var(--dialog-bg) !important;
         border: 1px solid var(--card-border) !important;
         box-shadow: var(--card-shadow) !important;
+        color: var(--text-primary) !important;
     }
 
     .dash-header {
@@ -408,6 +462,7 @@ st.markdown("""
         letter-spacing: -0.5px;
     }
 
+    /* THẺ METRIC CARD */
     .metric-card {
         background: var(--card-bg);
         backdrop-filter: blur(16px);
@@ -415,16 +470,13 @@ st.markdown("""
         border: 1px solid var(--card-border);
         border-radius: 20px;
         padding: 22px;
-        transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-        position: relative;
-        overflow: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         box-shadow: var(--card-shadow);
     }
     .metric-card:hover {
-        transform: translateY(-4px);
+        transform: translateY(-3px);
         background: var(--card-hover-bg);
         border-color: rgba(99, 102, 241, 0.4);
-        box-shadow: 0 15px 30px -10px rgba(99, 102, 241, 0.25);
     }
     .metric-title {
         color: var(--text-secondary);
@@ -448,9 +500,10 @@ st.markdown("""
         align-items: center;
         gap: 6px;
     }
-    .sub-green { color: #10B981; }
-    .sub-red { color: #EF4444; }
+    .sub-green { color: #10B981 !important; }
+    .sub-red { color: #EF4444 !important; }
 
+    /* BẢNG TÙY BIẾN HTML */
     .custom-table-container {
         border-radius: 18px;
         overflow: hidden;
@@ -471,68 +524,67 @@ st.markdown("""
         border-bottom: 1px solid var(--table-border);
     }
     .custom-table th {
-        padding: 18px 20px;
-        font-size: 0.95rem;
+        padding: 16px 20px;
+        font-size: 0.92rem;
         font-weight: 800;
         text-transform: uppercase;
         letter-spacing: 0.8px;
         color: var(--table-header-text);
     }
     .custom-table td {
-        padding: 18px 20px;
-        font-size: 1.05rem;
+        padding: 16px 20px;
+        font-size: 1.02rem;
         border-bottom: 1px solid var(--table-border);
         vertical-align: middle;
     }
     .custom-table tbody tr {
-        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .custom-table tbody tr:hover {
         background: var(--table-row-hover);
     }
     
     .badge-pill {
-        padding: 7px 16px;
+        padding: 6px 14px;
         border-radius: 20px;
-        font-size: 0.9rem;
+        font-size: 0.88rem;
         font-weight: 700;
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        letter-spacing: 0.2px;
     }
     .badge-red {
-        background: rgba(239, 68, 68, 0.15);
-        color: #EF4444;
-        border: 1px solid rgba(239, 68, 68, 0.3);
+        background: var(--badge-red-bg);
+        color: var(--badge-red-text);
+        border: 1px solid var(--badge-red-border);
     }
     .badge-green {
-        background: rgba(16, 185, 129, 0.15);
-        color: #10B981;
-        border: 1px solid rgba(16, 185, 129, 0.3);
+        background: var(--badge-green-bg);
+        color: var(--badge-green-text);
+        border: 1px solid var(--badge-green-border);
     }
     .badge-gray {
-        background: rgba(100, 116, 139, 0.15);
-        color: var(--text-secondary);
-        border: 1px solid rgba(100, 116, 139, 0.3);
+        background: var(--badge-gray-bg);
+        color: var(--badge-gray-text);
+        border: 1px solid var(--badge-gray-border);
     }
     .cat-title {
         display: flex;
         align-items: center;
         gap: 12px;
         font-weight: 700;
-        font-size: 1.05rem;
+        font-size: 1.02rem;
     }
     .cat-icon {
-        width: 38px;
-        height: 38px;
+        width: 36px;
+        height: 36px;
         border-radius: 10px;
         background: rgba(99, 102, 241, 0.15);
         border: 1px solid rgba(99, 102, 241, 0.3);
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.2rem;
+        font-size: 1.15rem;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -887,7 +939,7 @@ with tab_stats:
         )
 
         fig1.add_annotation(
-            text=f"<span style='font-size:12px; color:var(--text-secondary); font-weight:700;'>TỔNG CỐ ĐỊNH</span><br><b style='font-size:18px; color:var(--text-primary);'>{fixed_exp_total:,.0f} đ</b>",
+            text=f"<span style='font-size:12px; font-weight:700;'>TỔNG CỐ ĐỊNH</span><br><b style='font-size:18px;'>{fixed_exp_total:,.0f} đ</b>",
             x=0.5, y=0.5,
             showarrow=False,
             align="center"
@@ -954,7 +1006,7 @@ with tab_stats:
         )
 
         fig2.add_annotation(
-            text=f"<span style='font-size:12px; color:var(--text-secondary); font-weight:700;'>{bal_label}</span><br><b style='font-size:18px; color:{bal_color};'>{remaining_balance:,.0f} đ</b>",
+            text=f"<span style='font-size:12px; font-weight:700;'>{bal_label}</span><br><b style='font-size:18px; color:{bal_color};'>{remaining_balance:,.0f} đ</b>",
             x=0.5, y=0.5,
             showarrow=False,
             align="center"
