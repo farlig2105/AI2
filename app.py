@@ -13,8 +13,17 @@ st.set_page_config(
 )
 
 # ----------------------------------------------------
-# BỘ HÀM XỬ LÝ ĐỊNH DẠNG TIỀN TỆ & CSDL SESSION
+# KHỞI TẠO DỮ LIỆU & BỘ HÀM XỬ LÝ DÙNG CHUNG (GLOBAL)
 # ----------------------------------------------------
+CAT_ICONS = {
+    "Tiền nhà": "🏠",
+    "Thực phẩm": "🍲",
+    "Điện nước & Mạng": "⚡",
+    "Giải trí": "🎮",
+    "Đi lại": "🚗",
+    "Khác": "📦"
+}
+
 def parse_amount(val) -> float:
     """Chuyển đổi chuỗi nhập liệu hoặc số thành số thực"""
     if isinstance(val, (int, float)):
@@ -116,7 +125,7 @@ st.markdown("""
         box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8) !important;
     }
 
-    /* Headers & Cards - Enlarged Sizing */
+    /* Headers & Cards */
     .dash-header {
         background: linear-gradient(135deg, #818CF8 0%, #C084FC 50%, #34D399 100%);
         -webkit-background-clip: text;
@@ -168,7 +177,7 @@ st.markdown("""
     .sub-green { color: #34D399; }
     .sub-red { color: #F87171; }
 
-    /* Custom Navigation Tabs - Enlarged Font */
+    /* Custom Navigation Tabs */
     div[data-testid="stTabs"] {
         margin-top: 10px;
     }
@@ -746,15 +755,6 @@ with tab_stats:
             st.markdown(f"<div style='text-align: right; color: #34D399; font-weight: 700; font-size: 1.05rem;'>💰 Tổng chi phát sinh: {logged_exp_total:,.0f} VNĐ</div>", unsafe_allow_html=True)
 
     if not st.session_state.daily_logs.empty:
-        cat_icons = {
-            "Tiền nhà": "🏠",
-            "Thực phẩm": "🍲",
-            "Điện nước & Mạng": "⚡",
-            "Giải trí": "🎮",
-            "Đi lại": "🚗",
-            "Khác": "📦"
-        }
-
         # Tạo bản sao dữ liệu hiển thị đã định dạng đẹp mắt
         df_display = st.session_state.daily_logs.copy()
         df_display.reset_index(inplace=True)
@@ -762,7 +762,7 @@ with tab_stats:
         df_display["STT"] = df_display["STT"] + 1
         
         # Thêm biểu tượng Icon và định dạng hiển thị tiền
-        df_display["Danh mục hiển thị"] = df_display["Danh mục"].apply(lambda c: f"{cat_icons.get(c, '📌')} {c}")
+        df_display["Danh mục hiển thị"] = df_display["Danh mục"].apply(lambda c: f"{CAT_ICONS.get(c, '📌')} {c}")
         df_display["Số tiền hiển thị"] = df_display["Số tiền"].apply(lambda x: f"{int(x):,} VNĐ")
 
         df_show = df_display[["STT", "Ngày", "Danh mục hiển thị", "Số tiền hiển thị", "Ghi chú"]].copy()
@@ -803,7 +803,7 @@ with tab_stats:
         with col_del_select:
             # Danh sách chọn xóa thủ công bổ sung
             options_dict = {
-                f"Mục #{idx+1} | {row['Ngày']} | {row['Danh mục']} | {row['Số tiền']:,.0f} VNĐ ({row['Ghi chú'] or 'Khong ghi chu'})": idx
+                f"Mục #{idx+1} | {row['Ngày']} | {row['Danh mục']} | {row['Số tiền']:,.0f} VNĐ ({row['Ghi chú'] or 'Không ghi chú'})": idx
                 for idx, row in st.session_state.daily_logs.iterrows()
             }
             selected_dropdown_items = st.multiselect(
@@ -1133,7 +1133,7 @@ with tab_history:
             val_prev = prev_data["expenses"].get(cat, 0.0)
             diff = val_cur - val_prev
             pct = ((diff / val_prev) * 100) if val_prev > 0 else (100.0 if diff > 0 else 0.0)
-            icon = cat_icons.get(cat, "📌")
+            icon = CAT_ICONS.get(cat, "📌")
 
             if diff > 0:
                 diff_str = f"+{diff:,.0f} đ"
