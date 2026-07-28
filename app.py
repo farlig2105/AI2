@@ -489,7 +489,6 @@ with tab_stats:
                 "📈 Tỷ lệ: <b>%{percent}</b>"
                 "</div><extra></extra>"
             ),
-            hoveroffset=20,  # HIỆU ỨNG POP-OUT NẨY BÁNH KHI DI CHUỘT
             marker=dict(line=dict(color='#0F172A', width=3)),
             hoverlabel=dict(
                 bgcolor="rgba(15, 23, 42, 0.95)",
@@ -571,7 +570,6 @@ with tab_stats:
                 "📈 Tỷ lệ: <b>%{percent}</b>"
                 "</div><extra></extra>"
             ),
-            hoveroffset=20,  # HIỆU ỨNG POP-OUT NẨY BÁNH KHI DI CHUỘT
             marker=dict(line=dict(color='#0F172A', width=3)),
             hoverlabel=dict(
                 bgcolor="rgba(15, 23, 42, 0.95)",
