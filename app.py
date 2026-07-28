@@ -625,12 +625,12 @@ with tab_stats:
     st.divider()
     st.markdown("##### 📋 Nhật ký chi tiêu thực tế trong tháng")
     if not st.session_state.daily_logs.empty:
+        display_df = st.session_state.daily_logs.copy()
+        display_df["Số tiền (VNĐ)"] = display_df["Số tiền"].apply(lambda x: f"{int(x):,} VNĐ")
+        display_df = display_df[["Ngày", "Danh mục", "Số tiền (VNĐ)", "Ghi chú"]]
         st.dataframe(
-            st.session_state.daily_logs, 
-            use_container_width=True,
-            column_config={
-                "Số tiền": st.column_config.NumberColumn("Số tiền (VNĐ)", format="%d VNĐ")
-            }
+            display_df, 
+            use_container_width=True
         )
     else:
         st.info("Chưa có phát sinh chi tiêu nào được ghi nhận trong tháng này.")
