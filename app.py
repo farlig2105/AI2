@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
+from datetime import datetime
 
 # 1. Cấu hình trang
 st.set_page_config(
@@ -11,7 +13,7 @@ st.set_page_config(
 )
 
 # ----------------------------------------------------
-# BỘ HÀM XỬ LÝ ĐỊNH DẠNG TIỀN TỆ THÔNG MINH
+# BỘ HÀM XỬ LÝ ĐỊNH DẠNG TIỀN TỆ & CSDL SESSION
 # ----------------------------------------------------
 def parse_amount(val) -> float:
     """Chuyển đổi chuỗi nhập liệu thành số thực"""
@@ -67,7 +69,7 @@ def add_expense_callback():
         st.session_state.inp_log_amt = "0"
         st.session_state.inp_log_note = ""
 
-# 2. Tiêm CSS Tùy Biến (Thêm hiệu ứng Glow khi rê chuột & Tối ưu UI)
+# 2. Tiêm CSS Tùy Biến (Glow Hover & Styling Modern Dark)
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
@@ -81,11 +83,10 @@ st.markdown("""
         color: #F8FAFC;
     }
 
-    /* Hiệu ứng Bao Sáng (Glow) khi di chuột vào phần bánh của biểu đồ Plotly */
-    .js-plotly-plot .plotly .slice path {
+    .js-plotly-plot .plotly .slice path, .js-plotly-plot .plotly .bars path {
         transition: filter 0.3s ease, opacity 0.3s ease !important;
     }
-    .js-plotly-plot .plotly .slice:hover path {
+    .js-plotly-plot .plotly .slice:hover path, .js-plotly-plot .plotly .bars:hover path {
         filter: drop-shadow(0px 0px 12px rgba(129, 140, 248, 0.95)) drop-shadow(0px 0px 20px rgba(99, 102, 241, 0.7)) !important;
         opacity: 0.95 !important;
         cursor: pointer !important;
@@ -270,6 +271,25 @@ if "savings_goal" not in st.session_state:
     st.session_state.savings_goal = 2960000.0
 if "daily_logs" not in st.session_state:
     st.session_state.daily_logs = pd.DataFrame(columns=["Ngày", "Danh mục", "Số tiền", "Ghi chú"])
+
+# Dữ liệu lịch sử các tháng (Mặc định khởi tạo tháng trước để người dùng tham chiếu mẫu)
+current_month_str = datetime.now().strftime("%Y-%m")
+if "monthly_history" not in st.session_state:
+    st.session_state.monthly_history = {
+        "2026-06": {
+            "income": 15000000.0,
+            "expenses": {
+                "Tiền nhà": 3500000.0,
+                "Thực phẩm": 3800000.0,
+                "Điện nước & Mạng": 950000.0,
+                "Giải trí": 2000000.0,
+                "Đi lại": 750000.0,
+                "Khác": 600000.0
+            },
+            "savings_goal": 3000000.0
+        }
+    }
+
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = [
         {"role": "assistant", "content": "👋 **Xin chào! Tôi là FinBot AI** - Trợ lý tài chính thông minh của bạn.\n\nHãy bấm vào các gợi ý nhanh bên dưới hoặc đặt câu hỏi để tôi phân tích dòng tiền giúp bạn nhé!"}
@@ -389,6 +409,19 @@ def show_setup_modal():
 if not st.session_state.configured:
     show_setup_modal()
 
+# Tự động đồng bộ tháng hiện tại vào CSDL Lịch sử
+cur_exp_combined = st.session_state.fixed_expenses.copy()
+if not st.session_state.daily_logs.empty:
+    for _, row in st.session_state.daily_logs.iterrows():
+        cat = row["Danh mục"]
+        cur_exp_combined[cat] = cur_exp_combined.get(cat, 0.0) + row["Số tiền"]
+
+st.session_state.monthly_history[current_month_str] = {
+    "income": st.session_state.income,
+    "expenses": cur_exp_combined,
+    "savings_goal": st.session_state.savings_goal
+}
+
 # ----------------------------------------------------
 # 5. HEADER & TOP METRICS CARDS
 # ----------------------------------------------------
@@ -466,9 +499,13 @@ if st.session_state.savings_goal > 0:
 st.write("")
 
 # ----------------------------------------------------
-# 6. THANH SUB-TABS
+# 6. THANH SUB-TABS (BỔ SUNG TAB LỊCH SỬ Ở GIỮA)
 # ----------------------------------------------------
-tab_stats, tab_ai = st.tabs(["📊  Thống kê & Quản lý Chi tiêu", "🤖  Trợ lý Tài chính AI (FinBot)"])
+tab_stats, tab_history, tab_ai = st.tabs([
+    "📊  Thống kê & Quản lý Chi tiêu", 
+    "📅  Lịch sử & So sánh các tháng", 
+    "🤖  Trợ lý Tài chính AI (FinBot)"
+])
 
 # ================= TAB 1: THỐNG KÊ & PHÂN BỔ =================
 with tab_stats:
@@ -635,7 +672,146 @@ with tab_stats:
     else:
         st.info("Chưa có phát sinh chi tiêu nào được ghi nhận trong tháng này.")
 
-# ================= TAB 2: AI ASSISTANT (FINBOT) =================
+
+# ================= TAB 2: LỊCH SỬ & SO SÁNH CÁC THÁNG (MỚI) =================
+with tab_history:
+    st.write("")
+    st.markdown("##### 📅 Quản lý Lịch sử & Đối chiếu Chi tiêu các tháng")
+    
+    # Khung chọn tháng / Khai báo thủ công tháng trước
+    h_col1, h_col2 = st.columns([1, 1.2])
+    
+    with h_col1:
+        st.markdown("###### 📝 Nhập / Chỉnh sửa dữ liệu tháng cũ")
+        hist_month = st.date_input("Chọn tháng cần lưu/chỉnh sửa:", value=datetime.now()).strftime("%Y-%m")
+        
+        # Lấy dữ liệu cũ nếu có
+        existing_data = st.session_state.monthly_history.get(hist_month, {
+            "income": 15000000.0,
+            "expenses": st.session_state.fixed_expenses.copy(),
+            "savings_goal": 3000000.0
+        })
+        
+        h_inc = st.number_input(f"Thu nhập tháng {hist_month} (VNĐ):", value=float(existing_data["income"]), step=500000.0)
+        
+        st.markdown("**Chi tiêu theo từng danh mục:**")
+        h_exps = {}
+        h_exp_cols = st.columns(2)
+        idx = 0
+        for cat in st.session_state.fixed_expenses.keys():
+            col_target = h_exp_cols[idx % 2]
+            prev_val = float(existing_data["expenses"].get(cat, 0.0))
+            h_exps[cat] = col_target.number_input(f"{cat}:", value=prev_val, step=100000.0, key=f"hist_{hist_month}_{cat}")
+            idx += 1
+            
+        if st.button(f"💾 Lưu dữ liệu tháng {hist_month}", use_container_width=True):
+            st.session_state.monthly_history[hist_month] = {
+                "income": h_inc,
+                "expenses": h_exps,
+                "savings_goal": existing_data.get("savings_goal", 0.0)
+            }
+            st.success(f"✅ Đã lưu thành công dữ liệu cho tháng {hist_month}!")
+            st.rerun()
+
+    with h_col2:
+        st.markdown("###### 🔍 So sánh chi tiết tháng này với tháng đối chiếu")
+        all_months = sorted(list(st.session_state.monthly_history.keys()), reverse=True)
+        
+        comp_month = st.selectbox("Chọn tháng để đối chiếu với Tháng này:", [m for m in all_months if m != current_month_str] or all_months)
+        
+        if comp_month:
+            cur_data = st.session_state.monthly_history[current_month_str]
+            prev_data = st.session_state.monthly_history[comp_month]
+            
+            # Chuẩn bị dữ liệu cho Grouped Bar Chart
+            bar_records = []
+            for cat in st.session_state.fixed_expenses.keys():
+                bar_records.append({"Danh mục": cat, "Kỳ": f"Tháng trước ({comp_month})", "Số tiền": prev_data["expenses"].get(cat, 0.0)})
+                bar_records.append({"Danh mục": cat, "Kỳ": f"Tháng này ({current_month_str})", "Số tiền": cur_data["expenses"].get(cat, 0.0)})
+            
+            df_bar = pd.DataFrame(bar_records)
+            
+            fig_bar = px.bar(
+                df_bar, 
+                x="Danh mục", 
+                y="Số tiền", 
+                color="Kỳ", 
+                barmode="group",
+                color_discrete_map={
+                    f"Tháng trước ({comp_month})": "#818CF8",
+                    f"Tháng này ({current_month_str})": "#34D399"
+                }
+            )
+            
+            fig_bar.update_traces(
+                hovertemplate="<b>%{x}</b><br>💵 Số tiền: <b>%{y:,.0f} VNĐ</b><extra></extra>",
+                marker=dict(line=dict(color='#0F172A', width=1))
+            )
+            
+            fig_bar.update_layout(
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)',
+                font=dict(color='#F8FAFC', family="Plus Jakarta Sans", size=12),
+                xaxis=dict(gridcolor='rgba(255,255,255,0.05)', title=""),
+                yaxis=dict(gridcolor='rgba(255,255,255,0.08)', title="VNĐ"),
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+                height=380,
+                margin=dict(t=20, b=20, l=10, r=10)
+            )
+            st.plotly_chart(fig_bar, use_container_width=True)
+
+    st.divider()
+    
+    # --- BIỂU ĐỒ XU HƯỚNG TỔNG TÀI CHÍNH QUA CÁC THÁNG ---
+    st.markdown("##### 📈 Biến động Thu nhập - Chi tiêu - Số dư qua thời gian")
+    
+    history_list = []
+    for m in sorted(st.session_state.monthly_history.keys()):
+        m_inc = st.session_state.monthly_history[m]["income"]
+        m_exp = sum(st.session_state.monthly_history[m]["expenses"].values())
+        m_bal = m_inc - m_exp
+        history_list.append({"Tháng": m, "Thu nhập": m_inc, "Tổng chi tiêu": m_exp, "Số dư": m_bal})
+        
+    df_trend = pd.DataFrame(history_list)
+    
+    fig_trend = go.Figure()
+    fig_trend.add_trace(go.Scatter(x=df_trend["Tháng"], y=df_trend["Thu nhập"], mode='lines+markers', name='Thu nhập', line=dict(color='#818CF8', width=3)))
+    fig_trend.add_trace(go.Scatter(x=df_trend["Tháng"], y=df_trend["Tổng chi tiêu"], mode='lines+markers', name='Tổng chi tiêu', line=dict(color='#FB7185', width=3)))
+    fig_trend.add_trace(go.Scatter(x=df_trend["Tháng"], y=df_trend["Số dư"], mode='lines+markers', name='Số dư tích lũy', line=dict(color='#34D399', width=3)))
+    
+    fig_trend.update_layout(
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        font=dict(color='#F8FAFC', family="Plus Jakarta Sans", size=12),
+        xaxis=dict(gridcolor='rgba(255,255,255,0.05)'),
+        yaxis=dict(gridcolor='rgba(255,255,255,0.08)', title="VNĐ"),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        height=350,
+        margin=dict(t=20, b=20, l=10, r=10)
+    )
+    st.plotly_chart(fig_trend, use_container_width=True)
+
+    # --- BẢNG BÁO CÁO CHI TIẾT TĂNG/GIẢM CHI TIÊU ---
+    if comp_month:
+        st.markdown(f"##### 📊 Bảng so sánh chi tiêu chi tiết ({current_month_str} vs {comp_month})")
+        comp_table = []
+        for cat in st.session_state.fixed_expenses.keys():
+            val_cur = cur_data["expenses"].get(cat, 0.0)
+            val_prev = prev_data["expenses"].get(cat, 0.0)
+            diff = val_cur - val_prev
+            pct = ((diff / val_prev) * 100) if val_prev > 0 else 0.0
+            
+            comp_table.append({
+                "Danh mục": cat,
+                f"Tháng trước ({comp_month})": f"{val_prev:,.0f} VNĐ",
+                f"Tháng này ({current_month_str})": f"{val_cur:,.0f} VNĐ",
+                "Chênh lệch (VNĐ)": f"{'+' if diff > 0 else ''}{diff:,.0f} VNĐ",
+                "Phần trăm": f"{'+' if pct > 0 else ''}{pct:.1f}%"
+            })
+        st.dataframe(pd.DataFrame(comp_table), use_container_width=True)
+
+
+# ================= TAB 3: AI ASSISTANT (FINBOT) =================
 with tab_ai:
     st.write("")
     st.markdown("##### 🤖 FinBot AI - Cố vấn tài chính cá nhân")
