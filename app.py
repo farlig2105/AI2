@@ -4,7 +4,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
 import json
-from streamlit_local_storage import LocalStorage
+import streamlit.components.v1 as components
 
 # ----------------------------------------------------
 # 1. CẤU HÌNH TRANG & DANH MỤC BIỂU TƯỢNG
@@ -16,9 +16,6 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Khởi tạo LocalStorage trình duyệt
-local_storage = LocalStorage()
-
 CAT_ICONS = {
     "Tiền nhà": "🏠",
     "Thực phẩm": "🍲",
@@ -29,17 +26,34 @@ CAT_ICONS = {
 }
 
 # ----------------------------------------------------
-# 2. BỘ HÀM XỬ LÝ DÙNG CHUNG & ĐỒNG BỘ LOCALSTORAGE
+# 2. XỬ LÝ LOCALSTORAGE BẰNG JAVASCRIPT TRONG STREAMLIT
+# ----------------------------------------------------
+def save_data_to_local_storage(data_dict):
+    json_str = json.dumps(data_dict, ensure_ascii=False)
+    # Dùng component ẩn để lưu vào localStorage của trình duyệt
+    js_code = f"""
+    <script>
+        try {{
+            localStorage.setItem("finflow_user_data", {json.dumps(json_str)});
+        }} catch (e) {{}}
+    </script>
+    """
+    components.html(js_code, height=0, width=0)
+
+def load_data_from_local_storage():
+    # Sử dụng query param hoặc cơ chế đọc state khởi tạo
+    return st.session_state.get("browser_data_loaded", False)
+
+# ----------------------------------------------------
+# 3. BỘ HÀM XỬ LÝ DÙNG CHUNG
 # ----------------------------------------------------
 def parse_amount(val) -> float:
-    """Chuyển đổi chuỗi nhập liệu hoặc số thành số thực an toàn"""
     if isinstance(val, (int, float)):
         return float(val)
     cleaned = "".join(c for c in str(val) if c.isdigit())
     return float(cleaned) if cleaned else 0.0
 
 def format_money_callback(key_name):
-    """Callback tự động thêm dấu phẩy hàng nghìn khi người dùng nhập số"""
     raw_val = st.session_state.get(key_name, "")
     digits = "".join(c for c in str(raw_val) if c.isdigit())
     if digits:
@@ -48,7 +62,6 @@ def format_money_callback(key_name):
         st.session_state[key_name] = "0"
 
 def num2vi_words(val) -> str:
-    """Đọc số tiền dạng viết tắt trực quan (Nghìn / Triệu / Tỷ)"""
     n = int(parse_amount(val))
     if n <= 0:
         return "0 VNĐ"
@@ -67,8 +80,7 @@ def num2vi_words(val) -> str:
     else:
         return f"{n} VNĐ"
 
-def sync_to_local_storage():
-    """Hàm tự động đóng gói và ghi dữ liệu hiện tại vào LocalStorage trình duyệt"""
+def sync_data():
     data_to_save = {
         "configured": st.session_state.get("configured", False),
         "income": st.session_state.get("income", 15000000.0),
@@ -77,13 +89,9 @@ def sync_to_local_storage():
         "daily_logs": st.session_state.get("daily_logs", pd.DataFrame()).to_dict(orient="records"),
         "monthly_history": st.session_state.get("monthly_history", {})
     }
-    try:
-        local_storage.setItem("finflow_user_data", json.dumps(data_to_save, ensure_ascii=False))
-    except Exception:
-        pass
+    save_data_to_local_storage(data_to_save)
 
 def add_expense_callback():
-    """Hàm callback xử lý thêm khoản chi an toàn"""
     amt = parse_amount(st.session_state.get("inp_log_amt", "0"))
     if amt > 0:
         log_date = st.session_state.get("inp_log_date")
@@ -99,10 +107,10 @@ def add_expense_callback():
         st.session_state.daily_logs = pd.concat([st.session_state.daily_logs, new_row], ignore_index=True)
         st.session_state.inp_log_amt = "0"
         st.session_state.inp_log_note = ""
-        sync_to_local_storage()
+        sync_data()
 
 # ----------------------------------------------------
-# 3. TIÊM CSS TÙY BIẾN (MODERN DARK & GLASSMORPHISM)
+# 4. TIÊM CSS TÙY BIẾN (MODERN DARK & GLASSMORPHISM)
 # ----------------------------------------------------
 st.markdown("""
 <style>
@@ -124,15 +132,6 @@ st.markdown("""
         padding: 10px !important;
         backdrop-filter: blur(16px) !important;
         box-shadow: 0 20px 30px rgba(0, 0, 0, 0.35) !important;
-    }
-
-    .js-plotly-plot .plotly .slice path, .js-plotly-plot .plotly .bars path {
-        transition: filter 0.3s ease, opacity 0.3s ease !important;
-    }
-    .js-plotly-plot .plotly .slice:hover path, .js-plotly-plot .plotly .bars:hover path {
-        filter: drop-shadow(0px 0px 12px rgba(129, 140, 248, 0.95)) drop-shadow(0px 0px 20px rgba(99, 102, 241, 0.7)) !important;
-        opacity: 0.95 !important;
-        cursor: pointer !important;
     }
 
     div[data-testid="stDialog"] > div:first-child {
@@ -351,27 +350,8 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ----------------------------------------------------
-# 4. KHỞI TẠO SESSION STATE & NẠP DỮ LIỆU TỪ TRÌNH DUYỆT
+# 5. KHỞI TẠO SESSION STATE & DỮ LIỆU MẶC ĐỊNH
 # ----------------------------------------------------
-if "data_loaded_from_browser" not in st.session_state:
-    saved_str = local_storage.getItem("finflow_user_data")
-    if saved_str:
-        try:
-            saved_data = json.loads(saved_str)
-            st.session_state.configured = saved_data.get("configured", False)
-            st.session_state.income = saved_data.get("income", 15000000.0)
-            st.session_state.fixed_expenses = saved_data.get("fixed_expenses", {
-                "Tiền nhà": 3500000.0, "Thực phẩm": 4000000.0, "Điện nước & Mạng": 1000000.0,
-                "Giải trí": 1500000.0, "Đi lại": 800000.0, "Khác": 500000.0
-            })
-            st.session_state.savings_goal = saved_data.get("savings_goal", 2960000.0)
-            st.session_state.daily_logs = pd.DataFrame(saved_data.get("daily_logs", []))
-            st.session_state.monthly_history = saved_data.get("monthly_history", {})
-        except Exception:
-            pass
-    st.session_state.data_loaded_from_browser = True
-
-# Thiết lập các giá trị mặc định nếu chưa được nạp
 if "configured" not in st.session_state:
     st.session_state.configured = False
 if "modal_step" not in st.session_state:
@@ -427,7 +407,7 @@ if "inp_log_note" not in st.session_state:
     st.session_state.inp_log_note = ""
 
 # ----------------------------------------------------
-# 5. POP-UP MODAL THIẾT LẬP KHI KHỞI CHẠY
+# 6. POP-UP MODAL THIẾT LẬP KHI KHỞI CHẠY
 # ----------------------------------------------------
 @st.dialog("⚙️ Thiết Lập Khai Báo Tài Chính", width="large")
 def show_setup_modal():
@@ -517,7 +497,7 @@ def show_setup_modal():
                 st.session_state.savings_goal = goal_val
                 st.session_state.configured = True
                 st.session_state.modal_step = 1
-                sync_to_local_storage()
+                sync_data()
                 st.rerun()
 
 if not st.session_state.configured:
@@ -537,7 +517,7 @@ st.session_state.monthly_history[current_month_str] = {
 }
 
 # ----------------------------------------------------
-# 6. HEADER & TOP METRICS CARDS
+# 7. HEADER & TOP METRICS CARDS
 # ----------------------------------------------------
 head_col1, head_col2 = st.columns([3, 1])
 with head_col1:
@@ -546,22 +526,17 @@ with head_col1:
 with head_col2:
     if st.button("⚙️ Cấu hình lại thông tin", use_container_width=True):
         st.session_state.configured = False
-        try:
-            local_storage.deleteItem("finflow_user_data")
-        except Exception:
-            pass
+        components.html("<script>localStorage.removeItem('finflow_user_data');</script>", height=0, width=0)
         st.rerun()
 
 st.write("")
 
-# Tính toán chỉ số tổng quát
 fixed_exp_total = sum(st.session_state.fixed_expenses.values())
 logged_exp_total = st.session_state.daily_logs["Số tiền"].sum() if not st.session_state.daily_logs.empty else 0.0
 grand_total_exp = fixed_exp_total + logged_exp_total
 remaining_balance = st.session_state.income - grand_total_exp
 diff_goal = remaining_balance - st.session_state.savings_goal
 
-# Thẻ Metric
 m1, m2, m3, m4 = st.columns(4)
 with m1:
     st.markdown(f"""
@@ -605,7 +580,6 @@ with m4:
 
 st.write("")
 
-# Progress Bar Tích Lũy
 if st.session_state.savings_goal > 0:
     progress_ratio = min(max(remaining_balance / st.session_state.savings_goal, 0.0), 1.0)
     st.progress(progress_ratio)
@@ -617,7 +591,7 @@ if st.session_state.savings_goal > 0:
 st.write("")
 
 # ----------------------------------------------------
-# 7. THANH DI CHUYỂN TABS CHÍNH
+# 8. THANH DI CHUYỂN TABS CHÍNH
 # ----------------------------------------------------
 tab_stats, tab_history, tab_ai = st.tabs([
     "📊  Thống kê & Quản lý Chi tiêu", 
@@ -630,7 +604,6 @@ with tab_stats:
     st.write("")
     col_chart1, col_chart2, col_form = st.columns([1, 1, 0.95])
 
-    # --- BIỂU ĐỒ 1: CẤU TRÚC NGÂN SÁCH CỐ ĐỊNH ---
     with col_chart1:
         st.markdown("##### 📊 Phân bổ ngân sách cố định")
         df_fixed = pd.DataFrame(list(st.session_state.fixed_expenses.items()), columns=["Danh mục", "Số tiền"])
@@ -648,14 +621,7 @@ with tab_stats:
             textinfo='percent',
             insidetextfont=dict(size=13, color='#FFFFFF', family="Plus Jakarta Sans"),
             hovertemplate="<b>%{label}</b><br>💵 Số tiền: <b>%{value:,.0f} VNĐ</b><br>📈 Tỷ lệ: <b>%{percent}</b><extra></extra>",
-            marker=dict(line=dict(color='#0F172A', width=3)),
-            hoverlabel=dict(
-                bgcolor="#0F172A",
-                bordercolor="#818CF8",
-                font_size=14,
-                font_family="Plus Jakarta Sans",
-                font_color="#F8FAFC"
-            )
+            marker=dict(line=dict(color='#0F172A', width=3))
         )
 
         fig1.add_annotation(
@@ -683,7 +649,6 @@ with tab_stats:
         )
         st.plotly_chart(fig1, use_container_width=True)
 
-    # --- BIỂU ĐỒ 2: THỰC TẾ CHI TIÊU & SỐ DƯ CÒN LẠI ---
     with col_chart2:
         st.markdown("##### 📈 Chi tiêu thực tế & Số dư còn lại")
         
@@ -723,14 +688,7 @@ with tab_stats:
             textinfo='percent',
             insidetextfont=dict(size=13, color='#FFFFFF', family="Plus Jakarta Sans"),
             hovertemplate="<b>%{label}</b><br>💵 Số tiền: <b>%{value:,.0f} VNĐ</b><br>📈 Tỷ lệ: <b>%{percent}</b><extra></extra>",
-            marker=dict(line=dict(color='#0F172A', width=3)),
-            hoverlabel=dict(
-                bgcolor="#0F172A",
-                bordercolor=bal_color,
-                font_size=14,
-                font_family="Plus Jakarta Sans",
-                font_color="#F8FAFC"
-            )
+            marker=dict(line=dict(color='#0F172A', width=3))
         )
 
         fig2.add_annotation(
@@ -758,7 +716,6 @@ with tab_stats:
         )
         st.plotly_chart(fig2, use_container_width=True)
 
-    # --- KHUNG NHẬP KHOẢN CHI THỰC TẾ ---
     with col_form:
         st.markdown("##### ✍️ Ghi nhận khoản chi thực tế")
         st.date_input("Ngày giao dịch", key="inp_log_date")
@@ -779,9 +736,6 @@ with tab_stats:
 
     st.divider()
 
-    # ----------------------------------------------------
-    # BẢNG NHẬT KÝ CHI TIÊU & BỘ CÔNG CỤ CHỌN XÓA DỮ LIỆU NHẬP NHẦM
-    # ----------------------------------------------------
     log_count = len(st.session_state.daily_logs)
     head_log_a, head_log_b = st.columns([2, 1])
     with head_log_a:
@@ -829,7 +783,7 @@ with tab_stats:
                     st.session_state.daily_logs = st.session_state.daily_logs.drop(
                         st.session_state.daily_logs.index[selected_rows]
                     ).reset_index(drop=True)
-                    sync_to_local_storage()
+                    sync_data()
                     st.success("✅ Đã xóa thành công các khoản chi đã chọn!")
                     st.rerun()
 
@@ -849,7 +803,7 @@ with tab_stats:
                 if st.button("🗑️ Xóa các mục đã chọn trong danh sách", use_container_width=True):
                     indices_to_drop = [options_dict[item] for item in selected_dropdown_items]
                     st.session_state.daily_logs = st.session_state.daily_logs.drop(indices_to_drop).reset_index(drop=True)
-                    sync_to_local_storage()
+                    sync_data()
                     st.success("✅ Đã xóa thành công khoản chi được chọn!")
                     st.rerun()
     else:
@@ -947,7 +901,7 @@ with tab_history:
                 "expenses": h_exps,
                 "savings_goal": existing_data.get("savings_goal", 0.0)
             }
-            sync_to_local_storage()
+            sync_data()
             st.success(f"✅ Đã lưu thành công dữ liệu cho tháng {hist_month}!")
             st.rerun()
 
@@ -1000,24 +954,9 @@ with tab_history:
                 font_size=14,
                 font_family="Plus Jakarta Sans"
             ),
-            xaxis=dict(
-                gridcolor='rgba(255,255,255,0.05)', 
-                title="",
-                tickfont=dict(size=13, color="#F8FAFC")
-            ),
-            yaxis=dict(
-                gridcolor='rgba(255,255,255,0.08)', 
-                title="VNĐ",
-                tickfont=dict(size=13, color="#CBD5E1")
-            ),
-            legend=dict(
-                orientation="h", 
-                yanchor="bottom", 
-                y=1.04, 
-                xanchor="right", 
-                x=1,
-                font=dict(size=13, color="#F8FAFC")
-            ),
+            xaxis=dict(gridcolor='rgba(255,255,255,0.05)', title="", tickfont=dict(size=13, color="#F8FAFC")),
+            yaxis=dict(gridcolor='rgba(255,255,255,0.08)', title="VNĐ", tickfont=dict(size=13, color="#CBD5E1")),
+            legend=dict(orientation="h", yanchor="bottom", y=1.04, xanchor="right", x=1, font=dict(size=13, color="#F8FAFC")),
             height=390,
             margin=dict(t=30, b=20, l=10, r=10)
         )
@@ -1025,9 +964,7 @@ with tab_history:
 
     st.divider()
     
-    # --- BIỂU ĐỒ XU HƯỚNG TỔNG TÀI CHÍNH ---
     st.markdown("##### 📈 Biến động Thu nhập - Chi tiêu - Số dư qua thời gian")
-    st.caption("💡 *Di chuột lên bất kỳ mốc thời gian nào để xem bảng tổng hợp thông tin chi tiết tại điểm đó.*")
     
     history_list = []
     for m in sorted(st.session_state.monthly_history.keys()):
@@ -1043,76 +980,18 @@ with tab_history:
     df_trend = pd.DataFrame(history_list)
     
     fig_trend = go.Figure()
-    
-    fig_trend.add_trace(go.Scatter(
-        x=df_trend["Tháng"], 
-        y=df_trend["Thu nhập"], 
-        mode='lines+markers', 
-        name='Thu nhập',
-        line=dict(color='#818CF8', width=4, shape='spline'),
-        marker=dict(size=11, symbol='circle', line=dict(color='#FFFFFF', width=2)),
-        hovertemplate="💵 Thu nhập: <b>%{y:,.0f} VNĐ</b><extra></extra>"
-    ))
-
-    fig_trend.add_trace(go.Scatter(
-        x=df_trend["Tháng"], 
-        y=df_trend["Tổng chi tiêu"], 
-        mode='lines+markers', 
-        name='Tổng chi tiêu',
-        line=dict(color='#FB7185', width=4, shape='spline'),
-        marker=dict(size=11, symbol='circle', line=dict(color='#FFFFFF', width=2)),
-        hovertemplate="💸 Tổng chi: <b>%{y:,.0f} VNĐ</b><extra></extra>"
-    ))
-
-    fig_trend.add_trace(go.Scatter(
-        x=df_trend["Tháng"], 
-        y=df_trend["Số dư"], 
-        mode='lines+markers', 
-        name='Số dư tích lũy',
-        line=dict(color='#34D399', width=4, shape='spline'),
-        marker=dict(size=11, symbol='circle', line=dict(color='#FFFFFF', width=2)),
-        hovertemplate="💎 Số dư: <b>%{y:,.0f} VNĐ</b><extra></extra>"
-    ))
+    fig_trend.add_trace(go.Scatter(x=df_trend["Tháng"], y=df_trend["Thu nhập"], mode='lines+markers', name='Thu nhập', line=dict(color='#818CF8', width=4, shape='spline'), marker=dict(size=11)))
+    fig_trend.add_trace(go.Scatter(x=df_trend["Tháng"], y=df_trend["Tổng chi tiêu"], mode='lines+markers', name='Tổng chi tiêu', line=dict(color='#FB7185', width=4, shape='spline'), marker=dict(size=11)))
+    fig_trend.add_trace(go.Scatter(x=df_trend["Tháng"], y=df_trend["Số dư"], mode='lines+markers', name='Số dư tích lũy', line=dict(color='#34D399', width=4, shape='spline'), marker=dict(size=11)))
     
     fig_trend.update_layout(
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
         font=dict(color='#F8FAFC', family="Plus Jakarta Sans", size=13),
         hovermode="x unified",
-        hoverlabel=dict(
-            bgcolor="rgba(15, 23, 42, 0.95)",
-            bordercolor="rgba(99, 102, 241, 0.6)",
-            font_size=15,
-            font_family="Plus Jakarta Sans",
-            font_color="#F8FAFC"
-        ),
-        xaxis=dict(
-            gridcolor='rgba(255,255,255,0.08)', 
-            type='category',
-            tickfont=dict(size=14, color='#F8FAFC', family="Plus Jakarta Sans"),
-            showspikes=True,
-            spikecolor="rgba(129, 140, 248, 0.6)",
-            spikethickness=1.5,
-            spikedash="dot",
-            spikemode="across"
-        ),
-        yaxis=dict(
-            gridcolor='rgba(255,255,255,0.08)', 
-            title=dict(text="VNĐ", font=dict(size=13, color="#CBD5E1")),
-            tickfont=dict(size=13, color='#CBD5E1'),
-            showspikes=True,
-            spikecolor="rgba(129, 140, 248, 0.6)",
-            spikethickness=1.5,
-            spikedash="dot"
-        ),
-        legend=dict(
-            orientation="h", 
-            yanchor="bottom", 
-            y=1.04, 
-            xanchor="right", 
-            x=1,
-            font=dict(size=14, color="#F8FAFC")
-        ),
+        xaxis=dict(gridcolor='rgba(255,255,255,0.08)', type='category'),
+        yaxis=dict(gridcolor='rgba(255,255,255,0.08)', title="VNĐ"),
+        legend=dict(orientation="h", yanchor="bottom", y=1.04, xanchor="right", x=1),
         height=400,
         margin=dict(t=30, b=30, l=10, r=10)
     )
@@ -1120,7 +999,6 @@ with tab_history:
 
     st.divider()
 
-    # --- BẢNG BÁO CÁO GLASSMORPHISM UI ---
     col_tbl_title, col_tbl_select = st.columns([2, 1])
     with col_tbl_title:
         st.markdown(f"##### 📊 Bảng so sánh chi tiêu chi tiết ({current_month_str} vs {st.session_state.comp_month_selected})")
@@ -1233,24 +1111,13 @@ with tab_ai:
         exp_ratio = (grand_total_exp / st.session_state.income * 100) if st.session_state.income > 0 else 0
         
         if "phân tích" in prompt_lower or "thu chi" in prompt_lower:
-            ai_reply = f"""📊 **Báo cáo phân tích tài chính:**
-- **Tổng thu nhập:** `{st.session_state.income:,.0f} VNĐ`
-- **Tổng chi tiêu:** `{grand_total_exp:,.0f} VNĐ` (Chiếm **{exp_ratio:.1f}%** thu nhập)
-- **Số dư khả dụng:** `{remaining_balance:,.0f} VNĐ`
-
-💡 **Đánh giá:** {"⚠️ Tỷ lệ chi tiêu của bạn đang khá cao (>70%). Nên kiểm soát thêm các khoản phát sinh ngoài kế hoạch." if exp_ratio > 70 else "✅ Tỷ lệ chi tiêu của bạn rất lành mạnh và an toàn."}"""
+            ai_reply = f"""📊 **Báo cáo phân tích tài chính:**\n- **Tổng thu nhập:** `{st.session_state.income:,.0f} VNĐ`\n- **Tổng chi tiêu:** `{grand_total_exp:,.0f} VNĐ` (Chiếm **{exp_ratio:.1f}%** thu nhập)\n- **Số dư khả dụng:** `{remaining_balance:,.0f} VNĐ`\n\n💡 **Đánh giá:** {"⚠️ Tỷ lệ chi tiêu của bạn đang khá cao (>70%). Nên kiểm soát thêm các khoản phát sinh ngoài kế hoạch." if exp_ratio > 70 else "✅ Tỷ lệ chi tiêu của bạn rất lành mạnh và an toàn."}"""
         
         elif "tiết kiệm" in prompt_lower or "mục tiêu" in prompt_lower:
-            ai_reply = f"""💡 **Chiến lược đạt mục tiêu tiết kiệm:**
-- **Mục tiêu tháng:** `{st.session_state.savings_goal:,.0f} VNĐ`
-- **Số dư hiện tại:** `{remaining_balance:,.0f} VNĐ`
-- **Tình trạng:** {'🎉 Bạn đã xuất sắc hoàn thành mục tiêu tích lũy!' if diff_goal >= 0 else f'⚠️ Còn thiếu **{abs(diff_goal):,.0f} VNĐ**. Hãy ưu tiên trích ngay 20% thu nhập đầu tháng vào quỹ tiết kiệm!'}"""
+            ai_reply = f"""💡 **Chiến lược đạt mục tiêu tiết kiệm:**\n- **Mục tiêu tháng:** `{st.session_state.savings_goal:,.0f} VNĐ`\n- **Số dư hiện tại:** `{remaining_balance:,.0f} VNĐ`\n- **Tình trạng:** {'🎉 Bạn đã xuất sắc hoàn thành mục tiêu tích lũy!' if diff_goal >= 0 else f'⚠️ Còn thiếu **{abs(diff_goal):,.0f} VNĐ**. Hãy ưu tiên trích ngay 20% thu nhập đầu tháng vào quỹ tiết kiệm!'}"""
 
         elif "mua" in prompt_lower or "hạn mức" in prompt_lower:
-            ai_reply = f"""🛒 **Tư vấn hạn mức mua sắm:**
-Số dư khả dụng của bạn là **{remaining_balance:,.0f} VNĐ**. 
-- Khoản mua sắm **dưới {remaining_balance * 0.15:,.0f} VNĐ** (15% số dư) nằm trong hạn mức an toàn.
-- Nếu lớn hơn, hãy áp dụng quy tắc **"Hoãn 48 tiếng"** để tránh mua sắm cảm xúc!"""
+            ai_reply = f"""🛒 **Tư vấn hạn mức mua sắm:**\nSố dư khả dụng của bạn là **{remaining_balance:,.0f} VNĐ**. \n- Khoản mua sắm **dưới {remaining_balance * 0.15:,.0f} VNĐ** (15% số dư) nằm trong hạn mức an toàn.\n- Nếu lớn hơn, hãy áp dụng quy tắc **"Hoãn 48 tiếng"** để tránh mua sắm cảm xúc!"""
 
         else:
             ai_reply = f"""Tôi đã ghi nhận thắc mắc của bạn! Dựa trên ngân sách khả dụng **{remaining_balance:,.0f} VNĐ**, hãy thử chọn các gợi ý phía trên hoặc hỏi cụ thể hơn để tôi hỗ trợ nhé!"""
