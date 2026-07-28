@@ -66,7 +66,7 @@ def logout_user():
         "daily_logs", "monthly_history", "chat_history", "modal_step",
         "inp_income", "inp_rent", "inp_food", "inp_util", "inp_ent", 
         "inp_trans", "inp_other", "inp_log_amt", "inp_log_note", "inp_goal",
-        "multiselect_delete_logs", "daily_logs_table_grid"
+        "multiselect_delete_logs", "daily_logs_table_grid", "current_options_dict"
     ]
     for key in keys_to_clear:
         if key in st.session_state:
@@ -116,7 +116,7 @@ def sync_data():
     save_user_data()
 
 # ----------------------------------------------------
-# 4. BỘ HÀM XỬ LÝ DÙNG CHUNG
+# 4. BỘ HÀM XỬ LÝ DÙNG CHUNG & CALLBACKS
 # ----------------------------------------------------
 def parse_amount(val) -> float:
     if isinstance(val, (int, float)):
@@ -169,14 +169,36 @@ def add_expense_callback():
         st.session_state.inp_log_note = ""
         sync_data()
 
+def delete_grid_callback():
+    """Callback xử lý xóa dòng chọn trên bảng"""
+    grid_data = st.session_state.get("daily_logs_table_grid", {})
+    if isinstance(grid_data, dict):
+        selected_rows = grid_data.get("selection", {}).get("rows", [])
+        if selected_rows:
+            st.session_state.daily_logs = st.session_state.daily_logs.drop(
+                st.session_state.daily_logs.index[selected_rows]
+            ).reset_index(drop=True)
+            sync_data()
+
+def delete_multiselect_callback():
+    """Callback xử lý xóa dòng chọn từ dropdown list (Đã sửa lỗi StreamlitAPIException)"""
+    selected_items = st.session_state.get("multiselect_delete_logs", [])
+    options_dict = st.session_state.get("current_options_dict", {})
+    if selected_items and options_dict:
+        indices_to_drop = [options_dict[item] for item in selected_items if item in options_dict]
+        if indices_to_drop:
+            st.session_state.daily_logs = st.session_state.daily_logs.drop(indices_to_drop).reset_index(drop=True)
+            sync_data()
+    # Reset biến an toàn trong callback
+    st.session_state.multiselect_delete_logs = []
+
 # ----------------------------------------------------
-# 5. TIÊM CSS TÙY BIẾN (SỬA LỖI MÀU BẢNG & CHỮ KHI SANG LIGHT MODE)
+# 5. TIÊM CSS TÙY BIẾN
 # ----------------------------------------------------
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
     
-    /* MẶC ĐỊNH (LIGHT MODE PHỦ RỘNG CÁC TỰ CHỌN THUỘC TÍNH) */
     :root {
         --bg-gradient: linear-gradient(135deg, #F8FAFC 0%, #EEF2FF 50%, #E2E8F0 100%);
         --text-primary: #0F172A;
@@ -247,7 +269,6 @@ st.markdown("""
         }
     }
 
-    /* ÉP BUỘC CSS KHI NGƯỜI DÙNG CHỌN LIGHT MODE TRÊN MENU STREAMLIT */
     [data-theme="light"], .stApp[data-theme="light"], body[data-theme="light"] {
         --bg-gradient: linear-gradient(135deg, #F8FAFC 0%, #EEF2FF 50%, #E2E8F0 100%) !important;
         --text-primary: #0F172A !important;
@@ -282,7 +303,6 @@ st.markdown("""
         --badge-gray-border: #CBD5E1 !important;
     }
 
-    /* ÉP BUỘC CSS KHI NGƯỜI DÙNG CHỌN DARK MODE TRÊN MENU STREAMLIT */
     [data-theme="dark"], .stApp[data-theme="dark"], body[data-theme="dark"] {
         --bg-gradient: radial-gradient(circle at 50% 0%, #1E1B4B 0%, #0F172A 50%, #020617 100%) !important;
         --text-primary: #F8FAFC !important;
@@ -323,7 +343,6 @@ st.markdown("""
         font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
     }
 
-    /* Đảm bảo toàn bộ tiêu đề & văn bản có màu hiển thị sắc nét */
     h1, h2, h3, h4, h5, h6, .stMarkdown, .stMarkdown p, .stMarkdown span {
         color: var(--text-primary) !important;
     }
@@ -332,7 +351,6 @@ st.markdown("""
         color: var(--text-secondary) !important;
     }
 
-    /* XỬ LÝ KHẮC PHỤC TRIỆT ĐỂ MÀU BẢNG STREAMLIT DATAFRAME */
     div[data-testid="stDataFrame"], [data-testid="stTable"] {
         background-color: var(--table-bg) !important;
         color: var(--table-text) !important;
@@ -346,7 +364,6 @@ st.markdown("""
         color: var(--table-text) !important;
     }
 
-    /* FORM ĐĂNG NHẬP / ĐĂNG KÝ */
     .auth-title {
         background: linear-gradient(135deg, #6366F1 0%, #A855F7 50%, #10B981 100%);
         -webkit-background-clip: text;
@@ -364,7 +381,6 @@ st.markdown("""
         margin-bottom: 20px;
     }
 
-    /* NHÃN & Ô NHẬP LIỆU */
     div[data-testid="stTextInput"] label, 
     div[data-testid="stSelectbox"] label, 
     div[data-testid="stDateInput"] label,
@@ -398,7 +414,6 @@ st.markdown("""
         color: var(--text-primary) !important;
     }
 
-    /* TAB CHÍNH */
     div[data-baseweb="tab-list"] {
         background: var(--tab-bg) !important;
         backdrop-filter: blur(12px) !important;
@@ -437,7 +452,6 @@ st.markdown("""
         display: none !important;
     }
 
-    /* NÚT BẤM (BUTTON) */
     .stButton > button {
         border-radius: 12px !important;
         background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%) !important;
@@ -470,7 +484,6 @@ st.markdown("""
         letter-spacing: -0.5px;
     }
 
-    /* THẺ METRIC CARD */
     .metric-card {
         background: var(--card-bg);
         backdrop-filter: blur(16px);
@@ -511,7 +524,6 @@ st.markdown("""
     .sub-green { color: #10B981 !important; }
     .sub-red { color: #EF4444 !important; }
 
-    /* BẢNG HTML TÙY BIẾN CHO TAB 2 */
     .custom-table-container {
         border-radius: 18px;
         overflow: hidden;
@@ -711,7 +723,6 @@ if "chat_history" not in st.session_state:
         {"role": "assistant", "content": "👋 **Xin chào! Tôi là FinBot AI** - Trợ lý tài chính thông minh của bạn.\n\nHãy bấm vào các gợi ý nhanh bên dưới hoặc đặt câu hỏi để tôi phân tích dòng tiền giúp bạn nhé!"}
     ]
 
-# Khởi tạo an toàn giá trị cho các ô nhập liệu nếu chưa tồn tại
 if "inp_income" not in st.session_state:
     st.session_state.inp_income = f"{int(st.session_state.income):,}"
 if "inp_rent" not in st.session_state:
@@ -829,7 +840,6 @@ def show_setup_modal():
 if not st.session_state.configured:
     show_setup_modal()
 
-# Tự động đồng bộ tháng hiện tại vào CSDL Lịch sử
 cur_exp_combined = st.session_state.fixed_expenses.copy()
 if not st.session_state.daily_logs.empty:
     for _, row in st.session_state.daily_logs.iterrows():
@@ -1118,23 +1128,21 @@ with tab_stats:
         with col_del_action:
             if selected_rows:
                 st.warning(f"📌 Bạn đang chọn **{len(selected_rows)}** khoản chi trên bảng.")
-                if st.button("🗑️ Xóa các mục đã chọn trên bảng", type="primary", use_container_width=True):
-                    st.session_state.daily_logs = st.session_state.daily_logs.drop(
-                        st.session_state.daily_logs.index[selected_rows]
-                    ).reset_index(drop=True)
-                    
-                    if "daily_logs_table_grid" in st.session_state:
-                        del st.session_state["daily_logs_table_grid"]
-                        
-                    sync_data()
-                    st.success("✅ Đã xóa thành công các khoản chi đã chọn!")
-                    st.rerun()
+                st.button(
+                    "🗑️ Xóa các mục đã chọn trên bảng", 
+                    type="primary", 
+                    use_container_width=True, 
+                    on_click=delete_grid_callback
+                )
 
         with col_del_select:
             options_dict = {
                 f"Mục #{idx+1} | {row['Ngày']} | {row['Danh mục']} | {row['Số tiền']:,.0f} VNĐ ({row['Ghi chú'] or 'Không ghi chú'})": idx
                 for idx, row in st.session_state.daily_logs.iterrows()
             }
+            # Lưu tạm options_dict vào session state để callback truy cập
+            st.session_state["current_options_dict"] = options_dict
+
             selected_dropdown_items = st.multiselect(
                 "🎯 Hoặc chọn khoản chi muốn xóa theo danh sách:",
                 options=list(options_dict.keys()),
@@ -1143,16 +1151,11 @@ with tab_stats:
             )
             
             if selected_dropdown_items:
-                if st.button("🗑️ Xóa các mục đã chọn trong danh sách", use_container_width=True):
-                    indices_to_drop = [options_dict[item] for item in selected_dropdown_items if item in options_dict]
-                    if indices_to_drop:
-                        st.session_state.daily_logs = st.session_state.daily_logs.drop(indices_to_drop).reset_index(drop=True)
-                    
-                    st.session_state.multiselect_delete_logs = []
-                    
-                    sync_data()
-                    st.success("✅ Đã xóa thành công khoản chi được chọn!")
-                    st.rerun()
+                st.button(
+                    "🗑️ Xóa các mục đã chọn trong danh sách", 
+                    use_container_width=True, 
+                    on_click=delete_multiselect_callback
+                )
     else:
         st.info("Chưa có phát sinh chi tiêu nào được ghi nhận trong tháng này.")
 
