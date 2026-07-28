@@ -11,9 +11,9 @@ import hashlib
 # 1. CẤU HÌNH TRANG & DANH MỤC BIỂU TƯỢNG
 # ----------------------------------------------------
 st.set_page_config(
-    page_title="FinFlow - Quản Lý Tài Chính Cá Nhân",
+    page_title="FinPulse - Quản Lý Tài Chính Cá Nhân",
     layout="wide",
-    page_icon="💎",
+    page_icon="⚡",
     initial_sidebar_state="collapsed"
 )
 
@@ -56,7 +56,7 @@ def save_users(users: dict):
 def get_user_data_file() -> str:
     """Trả về đường dẫn file dữ liệu riêng của người dùng hiện tại."""
     current_user = st.session_state.get("current_user", "default")
-    return f"finflow_data_{current_user}.json"
+    return f"finpulse_data_{current_user}.json"
 
 def logout_user():
     """Xóa bộ nhớ đệm session state và đăng xuất."""
@@ -637,7 +637,7 @@ if not st.session_state.get("authenticated", False):
     st.write("")
     col_l1, col_l2, col_l3 = st.columns([1, 1.8, 1])
     with col_l2:
-        st.markdown('<div style="text-align: center; margin-bottom: 25px;"><div class="auth-title">💎 FinFlow</div><p class="auth-sub">Hệ thống Quản lý Tài chính Cá nhân Thông minh</p></div>', unsafe_allow_html=True)
+        st.markdown('<div style="text-align: center; margin-bottom: 25px;"><div class="auth-title">⚡ FinPulse</div><p class="auth-sub">Hệ thống Quản lý Tài chính Cá nhân Thông minh</p></div>', unsafe_allow_html=True)
         
         tab_login, tab_register = st.tabs(["🔑 Đăng nhập", "📝 Đăng ký"])
         users = load_users()
@@ -741,7 +741,7 @@ if "monthly_history" not in st.session_state or not st.session_state.monthly_his
 
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = [
-        {"role": "assistant", "content": "👋 **Xin chào! Tôi là FinBot AI** - Trợ lý tài chính thông minh của bạn.\n\nHãy bấm vào các gợi ý nhanh bên dưới hoặc đặt câu hỏi để tôi phân tích dòng tiền giúp bạn nhé!"}
+        {"role": "assistant", "content": "👋 **Xin chào! Tôi là FinPulse Bot AI** - Trợ lý tài chính thông minh của bạn.\n\nHãy bấm vào các gợi ý nhanh bên dưới hoặc đặt câu hỏi để tôi phân tích dòng tiền giúp bạn nhé!"}
     ]
 
 if "inp_income" not in st.session_state:
@@ -908,7 +908,7 @@ st.session_state.monthly_history[current_month_str] = {
 # ----------------------------------------------------
 head_col1, head_col2 = st.columns([2.5, 1.5])
 with head_col1:
-    st.markdown('<div class="dash-header">💎 FinFlow Dashboard</div>', unsafe_allow_html=True)
+    st.markdown('<div class="dash-header">⚡ FinPulse Dashboard</div>', unsafe_allow_html=True)
     st.caption(f"Tài khoản: **{st.session_state.current_user.upper()}** | Hệ thống quản lý tài chính cá nhân")
 with head_col2:
     btn_c1, btn_c2 = st.columns(2)
@@ -996,7 +996,7 @@ st.write("")
 tab_stats, tab_history, tab_ai = st.tabs([
     "📊  Thống kê & Quản lý Chi tiêu", 
     "📅  Lịch sử & So sánh các tháng", 
-    "🤖  Trợ lý Tài chính AI (FinBot)"
+    "🤖  Trợ lý Tài chính AI (FinPulse Bot)"
 ])
 
 # ================= TAB 1: THỐNG KÊ & PHÂN BỔ =================
@@ -1477,10 +1477,10 @@ with tab_history:
         st.markdown(html_table, unsafe_allow_html=True)
 
 
-# ================= TAB 3: AI ASSISTANT (FINBOT) =================
+# ================= TAB 3: AI ASSISTANT (FINPULSE BOT) =================
 with tab_ai:
     st.write("")
-    st.markdown("##### 🤖 FinBot AI - Cố vấn tài chính cá nhân")
+    st.markdown("##### 🤖 FinPulse Bot AI - Cố vấn tài chính cá nhân")
     st.caption(f"AI kết nối trực tiếp với dòng tiền của tài khoản {st.session_state.current_user.upper()} để phân tích.")
 
     q1, q2, q3 = st.columns(3)
