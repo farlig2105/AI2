@@ -4,6 +4,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
 import json
+import os
 import streamlit.components.v1 as components
 
 # ----------------------------------------------------
@@ -25,24 +26,44 @@ CAT_ICONS = {
     "Khác": "📦"
 }
 
-# ----------------------------------------------------
-# 2. XỬ LÝ LOCALSTORAGE BẰNG JAVASCRIPT TRONG STREAMLIT
-# ----------------------------------------------------
-def save_data_to_local_storage(data_dict):
-    json_str = json.dumps(data_dict, ensure_ascii=False)
-    # Dùng component ẩn để lưu vào localStorage của trình duyệt
-    js_code = f"""
-    <script>
-        try {{
-            localStorage.setItem("finflow_user_data", {json.dumps(json_str)});
-        }} catch (e) {{}}
-    </script>
-    """
-    components.html(js_code, height=0, width=0)
+DATA_FILE = "finflow_data.json"
 
-def load_data_from_local_storage():
-    # Sử dụng query param hoặc cơ chế đọc state khởi tạo
-    return st.session_state.get("browser_data_loaded", False)
+# ----------------------------------------------------
+# 2. XỬ LÝ LƯU & TẢI DỮ LIỆU TỰ ĐỘNG LÊN MÁY TÍNH
+# ----------------------------------------------------
+def load_user_data():
+    """Tải dữ liệu đã lưu từ tệp JSON trên máy người dùng."""
+    if os.path.exists(DATA_FILE):
+        try:
+            with open(DATA_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return None
+    return None
+
+def save_user_data():
+    """Lưu toàn bộ dữ liệu hiện tại vào tệp JSON trên máy."""
+    daily_logs_list = []
+    if "daily_logs" in st.session_state and isinstance(st.session_state.daily_logs, pd.DataFrame):
+        daily_logs_list = st.session_state.daily_logs.to_dict(orient="records")
+
+    data_to_save = {
+        "configured": st.session_state.get("configured", False),
+        "income": st.session_state.get("income", 15000000.0),
+        "fixed_expenses": st.session_state.get("fixed_expenses", {}),
+        "savings_goal": st.session_state.get("savings_goal", 0.0),
+        "daily_logs": daily_logs_list,
+        "monthly_history": st.session_state.get("monthly_history", {})
+    }
+    try:
+        with open(DATA_FILE, "w", encoding="utf-8") as f:
+            json.dump(data_to_save, f, ensure_ascii=False, indent=4)
+    except Exception:
+        pass
+
+def sync_data():
+    """Đồng bộ dữ liệu xuống tệp lưu trữ."""
+    save_user_data()
 
 # ----------------------------------------------------
 # 3. BỘ HÀM XỬ LÝ DÙNG CHUNG
@@ -79,17 +100,6 @@ def num2vi_words(val) -> str:
         return f"{nghin} nghìn {dong} VNĐ" if dong > 0 else f"{nghin} nghìn VNĐ"
     else:
         return f"{n} VNĐ"
-
-def sync_data():
-    data_to_save = {
-        "configured": st.session_state.get("configured", False),
-        "income": st.session_state.get("income", 15000000.0),
-        "fixed_expenses": st.session_state.get("fixed_expenses", {}),
-        "savings_goal": st.session_state.get("savings_goal", 0.0),
-        "daily_logs": st.session_state.get("daily_logs", pd.DataFrame()).to_dict(orient="records"),
-        "monthly_history": st.session_state.get("monthly_history", {})
-    }
-    save_data_to_local_storage(data_to_save)
 
 def add_expense_callback():
     amt = parse_amount(st.session_state.get("inp_log_amt", "0"))
@@ -350,8 +360,32 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ----------------------------------------------------
-# 5. KHỞI TẠO SESSION STATE & DỮ LIỆU MẶC ĐỊNH
+# 5. KHỞI TẠO SESSION STATE & TẢI DỮ LIỆU ĐÃ LƯU
 # ----------------------------------------------------
+if "data_loaded_from_disk" not in st.session_state:
+    saved_data = load_user_data()
+    if saved_data:
+        st.session_state.configured = saved_data.get("configured", False)
+        st.session_state.income = float(saved_data.get("income", 15000000.0))
+        st.session_state.fixed_expenses = saved_data.get("fixed_expenses", {
+            "Tiền nhà": 3500000.0, "Thực phẩm": 4000000.0, "Điện nước & Mạng": 1000000.0,
+            "Giải trí": 1500000.0, "Đi lại": 800000.0, "Khác": 500000.0
+        })
+        st.session_state.savings_goal = float(saved_data.get("savings_goal", 2960000.0))
+        
+        logs_raw = saved_data.get("daily_logs", [])
+        if logs_raw:
+            df_logs = pd.DataFrame(logs_raw)
+            for col in ["Ngày", "Danh mục", "Số tiền", "Ghi chú"]:
+                if col not in df_logs.columns:
+                    df_logs[col] = ""
+            st.session_state.daily_logs = df_logs
+        else:
+            st.session_state.daily_logs = pd.DataFrame(columns=["Ngày", "Danh mục", "Số tiền", "Ghi chú"])
+            
+        st.session_state.monthly_history = saved_data.get("monthly_history", {})
+    st.session_state.data_loaded_from_disk = True
+
 if "configured" not in st.session_state:
     st.session_state.configured = False
 if "modal_step" not in st.session_state:
@@ -386,7 +420,7 @@ if "chat_history" not in st.session_state:
         {"role": "assistant", "content": "👋 **Xin chào! Tôi là FinBot AI** - Trợ lý tài chính thông minh của bạn.\n\nHãy bấm vào các gợi ý nhanh bên dưới hoặc đặt câu hỏi để tôi phân tích dòng tiền giúp bạn nhé!"}
     ]
 
-# Keys nhập liệu
+# Khởi tạo giá trị các ô nhập liệu theo dữ liệu vừa khôi phục
 if "inp_income" not in st.session_state:
     st.session_state.inp_income = f"{int(st.session_state.income):,}"
 if "inp_rent" not in st.session_state:
@@ -526,7 +560,7 @@ with head_col1:
 with head_col2:
     if st.button("⚙️ Cấu hình lại thông tin", use_container_width=True):
         st.session_state.configured = False
-        components.html("<script>localStorage.removeItem('finflow_user_data');</script>", height=0, width=0)
+        sync_data()
         st.rerun()
 
 st.write("")
