@@ -62,7 +62,7 @@ def logout_user():
     """Xóa bộ nhớ đệm session state và đăng xuất."""
     keys_to_clear = [
         "authenticated", "current_user", "data_loaded_from_disk", 
-        "configured", "show_config_modal", "income", "fixed_expenses", "savings_goal", 
+        "configured", "income", "fixed_expenses", "savings_goal", 
         "daily_logs", "monthly_history", "chat_history", "modal_step",
         "inp_income", "inp_rent", "inp_food", "inp_util", "inp_ent", 
         "inp_trans", "inp_other", "inp_log_amt", "inp_log_note", "inp_goal",
@@ -97,7 +97,7 @@ def save_user_data():
         daily_logs_list = st.session_state.daily_logs.to_dict(orient="records")
 
     data_to_save = {
-        "configured": True,
+        "configured": st.session_state.get("configured", False),
         "income": st.session_state.get("income", 15000000.0),
         "fixed_expenses": st.session_state.get("fixed_expenses", {}),
         "savings_goal": st.session_state.get("savings_goal", 0.0),
@@ -116,7 +116,7 @@ def sync_data():
     save_user_data()
 
 # ----------------------------------------------------
-# 4. BỘ HÀM XỬ LÝ DÙNG CHUNG & CALLBACKS
+# 4. BỘ HÀM XỬ LÝ DÙNG CHUNG
 # ----------------------------------------------------
 def parse_amount(val) -> float:
     if isinstance(val, (int, float)):
@@ -169,32 +169,14 @@ def add_expense_callback():
         st.session_state.inp_log_note = ""
         sync_data()
 
-def delete_selected_logs_table(rows):
-    """Callback xóa khoản chi chọn từ bảng."""
-    if rows and "daily_logs" in st.session_state:
-        st.session_state.daily_logs = st.session_state.daily_logs.drop(
-            st.session_state.daily_logs.index[rows]
-        ).reset_index(drop=True)
-        if "daily_logs_table_grid" in st.session_state:
-            del st.session_state["daily_logs_table_grid"]
-        sync_data()
-
-def delete_selected_logs_dropdown(options_map):
-    """Callback xóa khoản chi chọn từ dropdown multiselect."""
-    selected_items = st.session_state.get("multiselect_delete_logs", [])
-    indices_to_drop = [options_map[item] for item in selected_items if item in options_map]
-    if indices_to_drop:
-        st.session_state.daily_logs = st.session_state.daily_logs.drop(indices_to_drop).reset_index(drop=True)
-    st.session_state.multiselect_delete_logs = []
-    sync_data()
-
 # ----------------------------------------------------
-# 5. TIÊM CSS TÙY BIẾN
+# 5. TIÊM CSS TÙY BIẾN (SỬA LỖI MÀU BẢNG & CHỮ KHI SANG LIGHT MODE)
 # ----------------------------------------------------
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
     
+    /* MẶC ĐỊNH (LIGHT MODE PHỦ RỘNG CÁC TỰ CHỌN THUỘC TÍNH) */
     :root {
         --bg-gradient: linear-gradient(135deg, #F8FAFC 0%, #EEF2FF 50%, #E2E8F0 100%);
         --text-primary: #0F172A;
@@ -265,12 +247,83 @@ st.markdown("""
         }
     }
 
+    /* ÉP BUỘC CSS KHI NGƯỜI DÙNG CHỌN LIGHT MODE TRÊN MENU STREAMLIT */
+    [data-theme="light"], .stApp[data-theme="light"], body[data-theme="light"] {
+        --bg-gradient: linear-gradient(135deg, #F8FAFC 0%, #EEF2FF 50%, #E2E8F0 100%) !important;
+        --text-primary: #0F172A !important;
+        --text-secondary: #475569 !important;
+        --card-bg: rgba(255, 255, 255, 0.9) !important;
+        --card-hover-bg: #FFFFFF !important;
+        --card-border: rgba(203, 213, 225, 0.8) !important;
+        --card-shadow: 0 10px 25px -5px rgba(148, 163, 184, 0.2) !important;
+        --input-bg: #FFFFFF !important;
+        --input-border: #CBD5E1 !important;
+        --input-text: #0F172A !important;
+        --tab-bg: #E2E8F0 !important;
+        --tab-text: #475569 !important;
+        --table-bg: #FFFFFF !important;
+        --table-text: #0F172A !important;
+        --table-border: #E2E8F0 !important;
+        --table-header-bg: #F1F5F9 !important;
+        --table-header-text: #0F172A !important;
+        --table-row-hover: rgba(99, 102, 241, 0.08) !important;
+        --dialog-bg: #FFFFFF !important;
+
+        --badge-red-bg: #FEE2E2 !important;
+        --badge-red-text: #DC2626 !important;
+        --badge-red-border: #FCA5A5 !important;
+
+        --badge-green-bg: #D1FAE5 !important;
+        --badge-green-text: #059669 !important;
+        --badge-green-border: #6EE7B7 !important;
+
+        --badge-gray-bg: #F1F5F9 !important;
+        --badge-gray-text: #475569 !important;
+        --badge-gray-border: #CBD5E1 !important;
+    }
+
+    /* ÉP BUỘC CSS KHI NGƯỜI DÙNG CHỌN DARK MODE TRÊN MENU STREAMLIT */
+    [data-theme="dark"], .stApp[data-theme="dark"], body[data-theme="dark"] {
+        --bg-gradient: radial-gradient(circle at 50% 0%, #1E1B4B 0%, #0F172A 50%, #020617 100%) !important;
+        --text-primary: #F8FAFC !important;
+        --text-secondary: #CBD5E1 !important;
+        --card-bg: rgba(30, 41, 59, 0.6) !important;
+        --card-hover-bg: rgba(30, 41, 59, 0.85) !important;
+        --card-border: rgba(255, 255, 255, 0.12) !important;
+        --card-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5) !important;
+        --input-bg: rgba(15, 23, 42, 0.85) !important;
+        --input-border: rgba(255, 255, 255, 0.2) !important;
+        --input-text: #FFFFFF !important;
+        --tab-bg: rgba(15, 23, 42, 0.6) !important;
+        --tab-text: #CBD5E1 !important;
+        --table-bg: #0F172A !important;
+        --table-text: #F8FAFC !important;
+        --table-border: rgba(255, 255, 255, 0.15) !important;
+        --table-header-bg: #1E293B !important;
+        --table-header-text: #E2E8F0 !important;
+        --table-row-hover: rgba(99, 102, 241, 0.2) !important;
+        --dialog-bg: rgba(15, 23, 42, 0.95) !important;
+
+        --badge-red-bg: rgba(239, 68, 68, 0.2) !important;
+        --badge-red-text: #FCA5A5 !important;
+        --badge-red-border: rgba(239, 68, 68, 0.4) !important;
+
+        --badge-green-bg: rgba(16, 185, 129, 0.2) !important;
+        --badge-green-text: #6EE7B7 !important;
+        --badge-green-border: rgba(16, 185, 129, 0.4) !important;
+
+        --badge-gray-bg: rgba(100, 116, 139, 0.2) !important;
+        --badge-gray-text: #CBD5E1 !important;
+        --badge-gray-border: rgba(100, 116, 139, 0.4) !important;
+    }
+
     .stApp {
         background: var(--bg-gradient) !important;
         color: var(--text-primary) !important;
         font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
     }
 
+    /* Đảm bảo toàn bộ tiêu đề & văn bản có màu hiển thị sắc nét */
     h1, h2, h3, h4, h5, h6, .stMarkdown, .stMarkdown p, .stMarkdown span {
         color: var(--text-primary) !important;
     }
@@ -279,6 +332,7 @@ st.markdown("""
         color: var(--text-secondary) !important;
     }
 
+    /* XỬ LÝ KHẮC PHỤC TRIỆT ĐỂ MÀU BẢNG STREAMLIT DATAFRAME */
     div[data-testid="stDataFrame"], [data-testid="stTable"] {
         background-color: var(--table-bg) !important;
         color: var(--table-text) !important;
@@ -292,6 +346,7 @@ st.markdown("""
         color: var(--table-text) !important;
     }
 
+    /* FORM ĐĂNG NHẬP / ĐĂNG KÝ */
     .auth-title {
         background: linear-gradient(135deg, #6366F1 0%, #A855F7 50%, #10B981 100%);
         -webkit-background-clip: text;
@@ -309,6 +364,7 @@ st.markdown("""
         margin-bottom: 20px;
     }
 
+    /* NHÃN & Ô NHẬP LIỆU */
     div[data-testid="stTextInput"] label, 
     div[data-testid="stSelectbox"] label, 
     div[data-testid="stDateInput"] label,
@@ -342,6 +398,7 @@ st.markdown("""
         color: var(--text-primary) !important;
     }
 
+    /* TAB CHÍNH */
     div[data-baseweb="tab-list"] {
         background: var(--tab-bg) !important;
         backdrop-filter: blur(12px) !important;
@@ -380,6 +437,7 @@ st.markdown("""
         display: none !important;
     }
 
+    /* NÚT BẤM (BUTTON) */
     .stButton > button {
         border-radius: 12px !important;
         background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%) !important;
@@ -412,6 +470,7 @@ st.markdown("""
         letter-spacing: -0.5px;
     }
 
+    /* THẺ METRIC CARD */
     .metric-card {
         background: var(--card-bg);
         backdrop-filter: blur(16px);
@@ -452,6 +511,7 @@ st.markdown("""
     .sub-green { color: #10B981 !important; }
     .sub-red { color: #EF4444 !important; }
 
+    /* BẢNG HTML TÙY BIẾN CHO TAB 2 */
     .custom-table-container {
         border-radius: 18px;
         overflow: hidden;
@@ -596,7 +656,7 @@ if not st.session_state.get("authenticated", False):
 if "data_loaded_from_disk" not in st.session_state:
     saved_data = load_user_data()
     if saved_data:
-        st.session_state.configured = True
+        st.session_state.configured = saved_data.get("configured", False)
         st.session_state.income = float(saved_data.get("income", 15000000.0))
         st.session_state.fixed_expenses = saved_data.get("fixed_expenses", {
             "Tiền nhà": 3500000.0, "Thực phẩm": 4000000.0, "Điện nước & Mạng": 1000000.0,
@@ -615,17 +675,10 @@ if "data_loaded_from_disk" not in st.session_state:
             st.session_state.daily_logs = pd.DataFrame(columns=["Ngày", "Danh mục", "Số tiền", "Ghi chú"])
             
         st.session_state.monthly_history = saved_data.get("monthly_history", {})
-        st.session_state.show_config_modal = False
-    else:
-        st.session_state.configured = False
-        st.session_state.show_config_modal = True
-
     st.session_state.data_loaded_from_disk = True
 
 if "configured" not in st.session_state:
-    st.session_state.configured = True
-if "show_config_modal" not in st.session_state:
-    st.session_state.show_config_modal = False
+    st.session_state.configured = False
 if "modal_step" not in st.session_state:
     st.session_state.modal_step = 1
 if "income" not in st.session_state:
@@ -658,7 +711,7 @@ if "chat_history" not in st.session_state:
         {"role": "assistant", "content": "👋 **Xin chào! Tôi là FinBot AI** - Trợ lý tài chính thông minh của bạn.\n\nHãy bấm vào các gợi ý nhanh bên dưới hoặc đặt câu hỏi để tôi phân tích dòng tiền giúp bạn nhé!"}
     ]
 
-# Khởi tạo giá trị ban đầu cho các ô nhập liệu
+# Khởi tạo an toàn giá trị cho các ô nhập liệu nếu chưa tồn tại
 if "inp_income" not in st.session_state:
     st.session_state.inp_income = f"{int(st.session_state.income):,}"
 if "inp_rent" not in st.session_state:
@@ -680,7 +733,7 @@ if "inp_log_note" not in st.session_state:
     st.session_state.inp_log_note = ""
 
 # ----------------------------------------------------
-# 8. POP-UP MODAL THIẾT LẬP KHI KHỞI CHẠY (CHỈ HIỂN THỊ KHI ĐƯỢC YÊU CẦU)
+# 8. POP-UP MODAL THIẾT LẬP KHI KHỞI CHẠY
 # ----------------------------------------------------
 @st.dialog("⚙️ Thiết Lập Khai Báo Tài Chính", width="large")
 def show_setup_modal():
@@ -725,27 +778,21 @@ def show_setup_modal():
             other_val = parse_amount(st.session_state.inp_other)
             st.caption(f"➔ Số tiền: **{other_val:,.0f} VNĐ** *({num2vi_words(other_val)})*")
 
-        col_next, col_cancel = st.columns([2, 1])
-        with col_next:
-            if st.button("Tiếp theo: Đặt mục tiêu tiết kiệm ➡️", use_container_width=True):
-                st.session_state.income = inc_val
-                st.session_state.fixed_expenses = {
-                    "Tiền nhà": rent_val,
-                    "Thực phẩm": food_val,
-                    "Điện nước & Mạng": util_val,
-                    "Giải trí": ent_val,
-                    "Đi lại": trans_val,
-                    "Khác": other_val
-                }
-                total_exp = sum(st.session_state.fixed_expenses.values())
-                max_possible = max(0.0, st.session_state.income - total_exp)
-                st.session_state.inp_goal = f"{int(max_possible * 0.8):,}"
-                st.session_state.modal_step = 2
-                st.rerun()
-        with col_cancel:
-            if st.button("✖️ Đóng", use_container_width=True):
-                st.session_state.show_config_modal = False
-                st.rerun()
+        if st.button("Tiếp theo: Đặt mục tiêu tiết kiệm ➡️", use_container_width=True):
+            st.session_state.income = inc_val
+            st.session_state.fixed_expenses = {
+                "Tiền nhà": rent_val,
+                "Thực phẩm": food_val,
+                "Điện nước & Mạng": util_val,
+                "Giải trí": ent_val,
+                "Đi lại": trans_val,
+                "Khác": other_val
+            }
+            total_exp = sum(st.session_state.fixed_expenses.values())
+            max_possible = max(0.0, st.session_state.income - total_exp)
+            st.session_state.inp_goal = f"{int(max_possible * 0.8):,}"
+            st.session_state.modal_step = 2
+            st.rerun()
 
     elif st.session_state.modal_step == 2:
         st.caption("Bước 2/2: Đặt mục tiêu tích lũy tháng")
@@ -775,13 +822,11 @@ def show_setup_modal():
             if st.button("Hoàn thành & Vào Dashboard 🚀", use_container_width=True):
                 st.session_state.savings_goal = goal_val
                 st.session_state.configured = True
-                st.session_state.show_config_modal = False
                 st.session_state.modal_step = 1
                 sync_data()
                 st.rerun()
 
-# Chỉ gọi hiển thị modal khi người dùng thực sự kích hoạt
-if st.session_state.get("show_config_modal", False):
+if not st.session_state.configured:
     show_setup_modal()
 
 # Tự động đồng bộ tháng hiện tại vào CSDL Lịch sử
@@ -808,7 +853,16 @@ with head_col2:
     btn_c1, btn_c2 = st.columns(2)
     with btn_c1:
         if st.button("⚙️ Cấu hình", use_container_width=True):
-            st.session_state.show_config_modal = True
+            st.session_state.configured = False
+            st.session_state.modal_step = 1
+            st.session_state.inp_income = f"{int(st.session_state.income):,}"
+            st.session_state.inp_rent = f"{int(st.session_state.fixed_expenses.get('Tiền nhà', 0)):,}"
+            st.session_state.inp_food = f"{int(st.session_state.fixed_expenses.get('Thực phẩm', 0)):,}"
+            st.session_state.inp_util = f"{int(st.session_state.fixed_expenses.get('Điện nước & Mạng', 0)):,}"
+            st.session_state.inp_ent = f"{int(st.session_state.fixed_expenses.get('Giải trí', 0)):,}"
+            st.session_state.inp_trans = f"{int(st.session_state.fixed_expenses.get('Đi lại', 0)):,}"
+            st.session_state.inp_other = f"{int(st.session_state.fixed_expenses.get('Khác', 0)):,}"
+            sync_data()
             st.rerun()
     with btn_c2:
         if st.button("🚪 Đăng xuất", use_container_width=True):
@@ -1064,13 +1118,17 @@ with tab_stats:
         with col_del_action:
             if selected_rows:
                 st.warning(f"📌 Bạn đang chọn **{len(selected_rows)}** khoản chi trên bảng.")
-                st.button(
-                    "🗑️ Xóa các mục đã chọn trên bảng", 
-                    type="primary", 
-                    use_container_width=True,
-                    on_click=delete_selected_logs_table,
-                    args=(selected_rows,)
-                )
+                if st.button("🗑️ Xóa các mục đã chọn trên bảng", type="primary", use_container_width=True):
+                    st.session_state.daily_logs = st.session_state.daily_logs.drop(
+                        st.session_state.daily_logs.index[selected_rows]
+                    ).reset_index(drop=True)
+                    
+                    if "daily_logs_table_grid" in st.session_state:
+                        del st.session_state["daily_logs_table_grid"]
+                        
+                    sync_data()
+                    st.success("✅ Đã xóa thành công các khoản chi đã chọn!")
+                    st.rerun()
 
         with col_del_select:
             options_dict = {
@@ -1085,12 +1143,16 @@ with tab_stats:
             )
             
             if selected_dropdown_items:
-                st.button(
-                    "🗑️ Xóa các mục đã chọn trong danh sách", 
-                    use_container_width=True,
-                    on_click=delete_selected_logs_dropdown,
-                    args=(options_dict,)
-                )
+                if st.button("🗑️ Xóa các mục đã chọn trong danh sách", use_container_width=True):
+                    indices_to_drop = [options_dict[item] for item in selected_dropdown_items if item in options_dict]
+                    if indices_to_drop:
+                        st.session_state.daily_logs = st.session_state.daily_logs.drop(indices_to_drop).reset_index(drop=True)
+                    
+                    st.session_state.multiselect_delete_logs = []
+                    
+                    sync_data()
+                    st.success("✅ Đã xóa thành công khoản chi được chọn!")
+                    st.rerun()
     else:
         st.info("Chưa có phát sinh chi tiêu nào được ghi nhận trong tháng này.")
 
