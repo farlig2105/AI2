@@ -91,7 +91,7 @@ st.markdown("""
     .sub-green { color: #34D399; }
     .sub-red { color: #F87171; }
 
-    /* ================= TÙY CHỈNH TABS (SEGMENTED CONTROL) ================= */
+    /* ================= TÙY CHỈNH TABS ================= */
     div[data-testid="stTabs"] {
         margin-top: 10px;
     }
@@ -137,7 +137,6 @@ st.markdown("""
         display: none !important;
     }
 
-    /* Hiệu ứng Fade-in mượt mà khi đổi Tab */
     div[data-testid="stTabContent"] {
         animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
@@ -171,13 +170,23 @@ st.markdown("""
         border-color: #6366F1 !important;
     }
 
-    /* Style cho Chatbot AI Container */
-    .stChatMessage {
-        border-radius: 16px !important;
-        padding: 12px 16px !important;
-        margin-bottom: 10px !important;
-        background: rgba(30, 41, 59, 0.5) !important;
-        border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    /* ================= FIX AVATAR & CHAT UI ================= */
+    div[data-testid="stChatMessage"] {
+        background: rgba(30, 41, 59, 0.4) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-radius: 18px !important;
+        padding: 14px 18px !important;
+        margin-bottom: 12px !important;
+        backdrop-filter: blur(10px) !important;
+    }
+
+    div[data-testid="stChatMessageAvatar"] {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.25) 0%, rgba(79, 70, 229, 0.25) 100%) !important;
+        border: 1px solid rgba(99, 102, 241, 0.4) !important;
+        border-radius: 12px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -285,7 +294,7 @@ grand_total_exp = fixed_exp_total + logged_exp_total
 remaining_balance = st.session_state.income - grand_total_exp
 diff_goal = remaining_balance - st.session_state.savings_goal
 
-# Thẻ Metric thiết kế Kính Glassmorphism
+# Thẻ Metric
 m1, m2, m3, m4 = st.columns(4)
 with m1:
     st.markdown(f"""
@@ -341,7 +350,7 @@ if st.session_state.savings_goal > 0:
 st.write("")
 
 # ----------------------------------------------------
-# 6. THANH SUB-TABS & BIỂU ĐỒ TRUNG TÂM
+# 6. THANH SUB-TABS
 # ----------------------------------------------------
 tab_stats, tab_ai = st.tabs(["📊  Thống kê & Quản lý Chi tiêu", "🤖  Trợ lý Tài chính AI (FinBot)"])
 
@@ -367,7 +376,6 @@ with tab_stats:
             hovertemplate='<b>%{label}</b><br>Số tiền: %{value:,.0f} VNĐ<br>Tỷ lệ: %{percent}<extra></extra>'
         )
 
-        # THÊM HIỂN THỊ TỔNG SỐ TIỀN VÀO GIỮA VÒNG TRÒN
         fig.add_annotation(
             text=f"<span style='font-size:12px; color:#94A3B8; font-weight:600;'>TỔNG CỐ ĐỊNH</span><br><b style='font-size:18px; color:#F8FAFC;'>{fixed_exp_total:,.0f} đ</b>",
             x=0.5, y=0.5,
@@ -446,7 +454,9 @@ with tab_ai:
     chat_container = st.container(height=420)
     with chat_container:
         for message in st.session_state.chat_history:
-            with st.chat_message(message["role"]):
+            # GÁN AVATAR EMOJI RÕ RÀNG ĐỂ TRÁNH LỖI VỠ HÌNH
+            avatar_icon = "🤖" if message["role"] == "assistant" else "👤"
+            with st.chat_message(message["role"], avatar=avatar_icon):
                 st.markdown(message["content"])
 
     # Xử lý nhập liệu từ bàn phím hoặc nút bấm hỏi nhanh
