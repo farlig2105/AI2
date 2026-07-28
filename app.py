@@ -49,6 +49,24 @@ def num2vi_words(val) -> str:
     else:
         return f"{n} VNĐ"
 
+def add_expense_callback():
+    """Hàm callback xử lý thêm khoản chi an toàn, tránh lỗi StreamlitAPIException"""
+    amt = parse_amount(st.session_state.get("inp_log_amt", "0"))
+    if amt > 0:
+        log_date = st.session_state.get("inp_log_date")
+        log_cat = st.session_state.get("inp_log_cat")
+        log_note = st.session_state.get("inp_log_note", "")
+
+        new_row = pd.DataFrame([{
+            "Ngày": str(log_date), 
+            "Danh mục": log_cat, 
+            "Số tiền": amt, 
+            "Ghi chú": log_note
+        }])
+        st.session_state.daily_logs = pd.concat([st.session_state.daily_logs, new_row], ignore_index=True)
+        st.session_state.inp_log_amt = "0"
+        st.session_state.inp_log_note = ""
+
 # 2. Tiêm CSS Tùy Biến (Ultra-Modern Fintech UI)
 st.markdown("""
 <style>
@@ -58,13 +76,11 @@ st.markdown("""
         font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
     }
 
-    /* Nền ứng dụng chính */
     .stApp {
         background: radial-gradient(circle at 50% 0%, #1E1B4B 0%, #0F172A 50%, #020617 100%) !important;
         color: #F8FAFC;
     }
 
-    /* Backdrop Blur cho Modal Dialog */
     div[data-testid="stDialog"] > div:first-child {
         backdrop-filter: blur(20px) !important;
         background-color: rgba(2, 6, 23, 0.8) !important;
@@ -77,7 +93,6 @@ st.markdown("""
         box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8) !important;
     }
 
-    /* Dashboard Header */
     .dash-header {
         background: linear-gradient(135deg, #818CF8 0%, #C084FC 50%, #34D399 100%);
         -webkit-background-clip: text;
@@ -87,7 +102,6 @@ st.markdown("""
         letter-spacing: -0.5px;
     }
 
-    /* Glassmorphic Metric Cards */
     .metric-card {
         background: rgba(30, 41, 59, 0.4);
         backdrop-filter: blur(16px);
@@ -130,7 +144,6 @@ st.markdown("""
     .sub-green { color: #34D399; }
     .sub-red { color: #F87171; }
 
-    /* Custom Tabs */
     div[data-testid="stTabs"] {
         margin-top: 10px;
     }
@@ -184,7 +197,6 @@ st.markdown("""
         to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Nút Bấm Gradient */
     .stButton > button {
         border-radius: 12px !important;
         background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%) !important;
@@ -199,7 +211,6 @@ st.markdown("""
         box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4) !important;
     }
 
-    /* Custom Inputs */
     div[data-baseweb="input"], div[data-baseweb="select"] {
         border-radius: 12px !important;
         background-color: rgba(15, 23, 42, 0.6) !important;
@@ -209,7 +220,6 @@ st.markdown("""
         border-color: #6366F1 !important;
     }
 
-    /* Fix Avatar & Chat UI */
     div[data-testid="stChatMessage"] {
         background: rgba(30, 41, 59, 0.4) !important;
         border: 1px solid rgba(255, 255, 255, 0.08) !important;
@@ -255,7 +265,7 @@ if "chat_history" not in st.session_state:
         {"role": "assistant", "content": "👋 **Xin chào! Tôi là FinBot AI** - Trợ lý tài chính thông minh của bạn.\n\nHãy bấm vào các gợi ý nhanh bên dưới hoặc đặt câu hỏi để tôi phân tích dòng tiền giúp bạn nhé!"}
     ]
 
-# Khởi tạo keys nhập liệu cho Modal
+# Keys nhập liệu
 if "inp_income" not in st.session_state:
     st.session_state.inp_income = f"{int(st.session_state.income):,}"
 if "inp_rent" not in st.session_state:
@@ -271,7 +281,9 @@ if "inp_trans" not in st.session_state:
 if "inp_other" not in st.session_state:
     st.session_state.inp_other = f"{int(st.session_state.fixed_expenses['Khác']):,}"
 if "inp_log_amt" not in st.session_state:
-    st.session_state.inp_log_amt = "500,000"
+    st.session_state.inp_log_amt = "0"
+if "inp_log_note" not in st.session_state:
+    st.session_state.inp_log_note = ""
 
 # 4. Pop-up Modal Thiết Lập
 @st.dialog("⚙️ Thiết Lập Khai Báo Tài Chính", width="large")
@@ -500,28 +512,22 @@ with tab_stats:
     with col_chart2:
         st.markdown("##### 📈 Chi tiêu thực tế & Số dư còn lại")
         
-        # Xây dựng danh sách các phần tử cho biểu đồ 2
         chart2_list = []
-        
-        # 1. Các khoản chi cố định
         for cat, amt in st.session_state.fixed_expenses.items():
             if amt > 0:
-                chart2_list.append({"Danh mục": cat, "Số tiền": amt, "Loại": "Chi cố định"})
+                chart2_list.append({"Danh mục": cat, "Số tiền": amt})
                 
-        # 2. Các khoản chi phát sinh thực tế nhập từ bảng
         if logged_exp_total > 0:
-            chart2_list.append({"Danh mục": "Chi phát sinh thực tế", "Số tiền": logged_exp_total, "Loại": "Chi phát sinh"})
+            chart2_list.append({"Danh mục": "Chi phát sinh thực tế", "Số tiền": logged_exp_total})
             
-        # 3. Khoảng tiết kiệm / số dư còn lại sau chi tiêu
         if remaining_balance > 0:
-            chart2_list.append({"Danh mục": "Số dư còn lại", "Số tiền": remaining_balance, "Loại": "Số dư"})
+            chart2_list.append({"Danh mục": "Số dư còn lại", "Số tiền": remaining_balance})
 
         df_chart2 = pd.DataFrame(chart2_list)
 
-        # Định nghĩa màu sắc nổi bật cho từng mục
         color_map = {
-            "Số dư còn lại": "#34D399",          # Xanh emerald rực rỡ cho số dư/tiết kiệm
-            "Chi phát sinh thực tế": "#FB7185",  # Đỏ hồng phát sinh
+            "Số dư còn lại": "#34D399",
+            "Chi phát sinh thực tế": "#FB7185",
         }
 
         fig2 = px.pie(
@@ -539,7 +545,6 @@ with tab_stats:
             hovertemplate='<b>%{label}</b><br>Số tiền: %{value:,.0f} VNĐ<br>Tỷ lệ: %{percent}<extra></extra>'
         )
 
-        # Cấu hình hiển thị khoản tiết kiệm/số dư còn lại ở giữa hình tròn
         bal_color = "#34D399" if remaining_balance >= 0 else "#F87171"
         bal_label = "SỐ DƯ CÒN LẠI" if remaining_balance >= 0 else "THÂM HỤT"
 
@@ -571,10 +576,9 @@ with tab_stats:
     # --- KHUNG NHẬP KHOẢN CHI THỰC TẾ ---
     with col_form:
         st.markdown("##### ✍️ Ghi nhận khoản chi thực tế")
-        log_date = st.date_input("Ngày giao dịch")
-        log_cat = st.selectbox("Danh mục", list(st.session_state.fixed_expenses.keys()))
+        st.date_input("Ngày giao dịch", key="inp_log_date")
+        st.selectbox("Danh mục", list(st.session_state.fixed_expenses.keys()), key="inp_log_cat")
         
-        # Ô nhập số tiền động tự nhảy dấu phẩy và hiển thị chữ viết tắt bên dưới
         st.text_input(
             "Số tiền (VNĐ)",
             key="inp_log_amt",
@@ -584,15 +588,10 @@ with tab_stats:
         log_amt = parse_amount(st.session_state.inp_log_amt)
         st.caption(f"➔ Số tiền: **{log_amt:,.0f} VNĐ** *({num2vi_words(log_amt)})*")
         
-        log_note = st.text_input("Ghi chú khoản chi", placeholder="VD: Mua thực phẩm siêu thị")
+        st.text_input("Ghi chú khoản chi", key="inp_log_note", placeholder="VD: Mua thực phẩm siêu thị")
         
-        if st.button("➕ Thêm khoản chi", use_container_width=True):
-            if log_amt > 0:
-                new_row = pd.DataFrame([{"Ngày": str(log_date), "Danh mục": log_cat, "Số tiền": log_amt, "Ghi chú": log_note}])
-                st.session_state.daily_logs = pd.concat([st.session_state.daily_logs, new_row], ignore_index=True)
-                st.toast("Đã ghi nhận chi tiêu thành công!", icon="✅")
-                st.session_state.inp_log_amt = "0"
-                st.rerun()
+        # Gọi hàm callback on_click để thêm khoản chi an toàn
+        st.button("➕ Thêm khoản chi", use_container_width=True, on_click=add_expense_callback)
 
     st.divider()
     st.markdown("##### 📋 Nhật ký chi tiêu thực tế trong tháng")
@@ -613,7 +612,6 @@ with tab_ai:
     st.markdown("##### 🤖 FinBot AI - Cố vấn tài chính cá nhân")
     st.caption("AI kết nối trực tiếp với dòng tiền của bạn để đưa ra phân tích chuyên sâu.")
 
-    # Nút bấm hỏi nhanh
     q1, q2, q3 = st.columns(3)
     user_click_prompt = None
     with q1:
@@ -628,7 +626,6 @@ with tab_ai:
 
     st.write("")
 
-    # Cửa sổ Chat
     chat_container = st.container(height=420)
     with chat_container:
         for message in st.session_state.chat_history:
@@ -636,7 +633,6 @@ with tab_ai:
             with st.chat_message(message["role"], avatar=avatar_icon):
                 st.markdown(message["content"])
 
-    # Xử lý nhập liệu từ bàn phím hoặc nút bấm
     user_prompt = st.chat_input("Nhập câu hỏi cho AI...") or user_click_prompt
 
     if user_prompt:
