@@ -698,7 +698,7 @@ with tab_history:
     with h_col1:
         st.markdown("###### 📝 Nhập / Chỉnh sửa dữ liệu tháng cũ")
         
-        # Hộp chọn riêng Năm và Tháng thay cho st.date_input
+        # Hộp chọn riêng Năm và Tháng
         now_dt = datetime.now()
         year_options = list(range(now_dt.year - 3, now_dt.year + 4))
         
@@ -727,7 +727,6 @@ with tab_history:
             "savings_goal": 3000000.0
         })
 
-        # Định dạng tiền tệ chuỗi với dấu phẩy phân cách hàng nghìn
         if f"h_inc_str_{hist_month}" not in st.session_state:
             st.session_state[f"h_inc_str_{hist_month}"] = f"{int(existing_data['income']):,}"
 
@@ -835,7 +834,12 @@ with tab_history:
         m_inc = st.session_state.monthly_history[m]["income"]
         m_exp = sum(st.session_state.monthly_history[m]["expenses"].values())
         m_bal = m_inc - m_exp
-        history_list.append({"Tháng": m, "Thu nhập": m_inc, "Tổng chi tiêu": m_exp, "Số dư": m_bal})
+        
+        # Định dạng lại nhãn tháng hiển thị (Ví dụ: Tháng 06/2026)
+        parts = m.split("-")
+        m_label = f"Tháng {parts[1]}/{parts[0]}" if len(parts) == 2 else m
+        
+        history_list.append({"Tháng": m_label, "Thu nhập": m_inc, "Tổng chi tiêu": m_exp, "Số dư": m_bal})
         
     df_trend = pd.DataFrame(history_list)
     
@@ -848,7 +852,10 @@ with tab_history:
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
         font=dict(color='#F8FAFC', family="Plus Jakarta Sans", size=12),
-        xaxis=dict(gridcolor='rgba(255,255,255,0.05)'),
+        xaxis=dict(
+            gridcolor='rgba(255,255,255,0.05)', 
+            type='category'  # Khóa kiểu dữ liệu trục X dạng danh mục tháng thay vì chuỗi ngày liên tục
+        ),
         yaxis=dict(gridcolor='rgba(255,255,255,0.08)', title="VNĐ"),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
         height=350,
