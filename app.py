@@ -3,6 +3,8 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
+import json
+from streamlit_local_storage import LocalStorage
 
 # ----------------------------------------------------
 # 1. CẤU HÌNH TRANG & DANH MỤC BIỂU TƯỢNG
@@ -14,6 +16,9 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+# Khởi tạo LocalStorage trình duyệt
+local_storage = LocalStorage()
+
 CAT_ICONS = {
     "Tiền nhà": "🏠",
     "Thực phẩm": "🍲",
@@ -24,7 +29,7 @@ CAT_ICONS = {
 }
 
 # ----------------------------------------------------
-# 2. BỘ HÀM XỬ LÝ DÙNG CHUNG (GLOBAL UTILS & CALLBACKS)
+# 2. BỘ HÀM XỬ LÝ DÙNG CHUNG & ĐỒNG BỘ LOCALSTORAGE
 # ----------------------------------------------------
 def parse_amount(val) -> float:
     """Chuyển đổi chuỗi nhập liệu hoặc số thành số thực an toàn"""
@@ -62,6 +67,21 @@ def num2vi_words(val) -> str:
     else:
         return f"{n} VNĐ"
 
+def sync_to_local_storage():
+    """Hàm tự động đóng gói và ghi dữ liệu hiện tại vào LocalStorage trình duyệt"""
+    data_to_save = {
+        "configured": st.session_state.get("configured", False),
+        "income": st.session_state.get("income", 15000000.0),
+        "fixed_expenses": st.session_state.get("fixed_expenses", {}),
+        "savings_goal": st.session_state.get("savings_goal", 0.0),
+        "daily_logs": st.session_state.get("daily_logs", pd.DataFrame()).to_dict(orient="records"),
+        "monthly_history": st.session_state.get("monthly_history", {})
+    }
+    try:
+        local_storage.setItem("finflow_user_data", json.dumps(data_to_save, ensure_ascii=False))
+    except Exception:
+        pass
+
 def add_expense_callback():
     """Hàm callback xử lý thêm khoản chi an toàn"""
     amt = parse_amount(st.session_state.get("inp_log_amt", "0"))
@@ -79,6 +99,7 @@ def add_expense_callback():
         st.session_state.daily_logs = pd.concat([st.session_state.daily_logs, new_row], ignore_index=True)
         st.session_state.inp_log_amt = "0"
         st.session_state.inp_log_note = ""
+        sync_to_local_storage()
 
 # ----------------------------------------------------
 # 3. TIÊM CSS TÙY BIẾN (MODERN DARK & GLASSMORPHISM)
@@ -96,7 +117,6 @@ st.markdown("""
         color: #F8FAFC;
     }
 
-    /* Dataframe Styling */
     div[data-testid="stDataFrame"] {
         background: rgba(15, 23, 42, 0.65) !important;
         border: 1px solid rgba(255, 255, 255, 0.12) !important;
@@ -106,7 +126,6 @@ st.markdown("""
         box-shadow: 0 20px 30px rgba(0, 0, 0, 0.35) !important;
     }
 
-    /* Plotly Glow Effects */
     .js-plotly-plot .plotly .slice path, .js-plotly-plot .plotly .bars path {
         transition: filter 0.3s ease, opacity 0.3s ease !important;
     }
@@ -116,7 +135,6 @@ st.markdown("""
         cursor: pointer !important;
     }
 
-    /* Modal Dialog */
     div[data-testid="stDialog"] > div:first-child {
         backdrop-filter: blur(20px) !important;
         background-color: rgba(2, 6, 23, 0.8) !important;
@@ -129,7 +147,6 @@ st.markdown("""
         box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8) !important;
     }
 
-    /* Headers & Metric Cards */
     .dash-header {
         background: linear-gradient(135deg, #818CF8 0%, #C084FC 50%, #34D399 100%);
         -webkit-background-clip: text;
@@ -181,7 +198,6 @@ st.markdown("""
     .sub-green { color: #34D399; }
     .sub-red { color: #F87171; }
 
-    /* Custom Navigation Tabs */
     div[data-testid="stTabs"] {
         margin-top: 10px;
     }
@@ -227,7 +243,6 @@ st.markdown("""
         display: none !important;
     }
 
-    /* Buttons & Inputs */
     .stButton > button {
         border-radius: 12px !important;
         background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%) !important;
@@ -249,7 +264,6 @@ st.markdown("""
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
     }
 
-    /* Custom Glassmorphism Table */
     .custom-table-container {
         border-radius: 18px;
         overflow: hidden;
@@ -337,8 +351,27 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ----------------------------------------------------
-# 4. KHỞI TẠO SESSION STATE
+# 4. KHỞI TẠO SESSION STATE & NẠP DỮ LIỆU TỪ TRÌNH DUYỆT
 # ----------------------------------------------------
+if "data_loaded_from_browser" not in st.session_state:
+    saved_str = local_storage.getItem("finflow_user_data")
+    if saved_str:
+        try:
+            saved_data = json.loads(saved_str)
+            st.session_state.configured = saved_data.get("configured", False)
+            st.session_state.income = saved_data.get("income", 15000000.0)
+            st.session_state.fixed_expenses = saved_data.get("fixed_expenses", {
+                "Tiền nhà": 3500000.0, "Thực phẩm": 4000000.0, "Điện nước & Mạng": 1000000.0,
+                "Giải trí": 1500000.0, "Đi lại": 800000.0, "Khác": 500000.0
+            })
+            st.session_state.savings_goal = saved_data.get("savings_goal", 2960000.0)
+            st.session_state.daily_logs = pd.DataFrame(saved_data.get("daily_logs", []))
+            st.session_state.monthly_history = saved_data.get("monthly_history", {})
+        except Exception:
+            pass
+    st.session_state.data_loaded_from_browser = True
+
+# Thiết lập các giá trị mặc định nếu chưa được nạp
 if "configured" not in st.session_state:
     st.session_state.configured = False
 if "modal_step" not in st.session_state:
@@ -347,31 +380,22 @@ if "income" not in st.session_state:
     st.session_state.income = 15000000.0
 if "fixed_expenses" not in st.session_state:
     st.session_state.fixed_expenses = {
-        "Tiền nhà": 3500000.0,
-        "Thực phẩm": 4000000.0,
-        "Điện nước & Mạng": 1000000.0,
-        "Giải trí": 1500000.0,
-        "Đi lại": 800000.0,
-        "Khác": 500000.0
+        "Tiền nhà": 3500000.0, "Thực phẩm": 4000000.0, "Điện nước & Mạng": 1000000.0,
+        "Giải trí": 1500000.0, "Đi lại": 800000.0, "Khác": 500000.0
     }
 if "savings_goal" not in st.session_state:
     st.session_state.savings_goal = 2960000.0
 if "daily_logs" not in st.session_state:
     st.session_state.daily_logs = pd.DataFrame(columns=["Ngày", "Danh mục", "Số tiền", "Ghi chú"])
 
-# Dữ liệu lịch sử các tháng
 current_month_str = datetime.now().strftime("%Y-%m")
-if "monthly_history" not in st.session_state:
+if "monthly_history" not in st.session_state or not st.session_state.monthly_history:
     st.session_state.monthly_history = {
         "2026-06": {
             "income": 15000000.0,
             "expenses": {
-                "Tiền nhà": 3500000.0,
-                "Thực phẩm": 3800000.0,
-                "Điện nước & Mạng": 950000.0,
-                "Giải trí": 2000000.0,
-                "Đi lại": 750000.0,
-                "Khác": 600000.0
+                "Tiền nhà": 3500000.0, "Thực phẩm": 3800000.0, "Điện nước & Mạng": 950000.0,
+                "Giải trí": 2000000.0, "Đi lại": 750000.0, "Khác": 600000.0
             },
             "savings_goal": 3000000.0
         }
@@ -386,17 +410,17 @@ if "chat_history" not in st.session_state:
 if "inp_income" not in st.session_state:
     st.session_state.inp_income = f"{int(st.session_state.income):,}"
 if "inp_rent" not in st.session_state:
-    st.session_state.inp_rent = f"{int(st.session_state.fixed_expenses['Tiền nhà']):,}"
+    st.session_state.inp_rent = f"{int(st.session_state.fixed_expenses.get('Tiền nhà', 0)):,}"
 if "inp_food" not in st.session_state:
-    st.session_state.inp_food = f"{int(st.session_state.fixed_expenses['Thực phẩm']):,}"
+    st.session_state.inp_food = f"{int(st.session_state.fixed_expenses.get('Thực phẩm', 0)):,}"
 if "inp_util" not in st.session_state:
-    st.session_state.inp_util = f"{int(st.session_state.fixed_expenses['Điện nước & Mạng']):,}"
+    st.session_state.inp_util = f"{int(st.session_state.fixed_expenses.get('Điện nước & Mạng', 0)):,}"
 if "inp_ent" not in st.session_state:
-    st.session_state.inp_ent = f"{int(st.session_state.fixed_expenses['Giải trí']):,}"
+    st.session_state.inp_ent = f"{int(st.session_state.fixed_expenses.get('Giải trí', 0)):,}"
 if "inp_trans" not in st.session_state:
-    st.session_state.inp_trans = f"{int(st.session_state.fixed_expenses['Đi lại']):,}"
+    st.session_state.inp_trans = f"{int(st.session_state.fixed_expenses.get('Đi lại', 0)):,}"
 if "inp_other" not in st.session_state:
-    st.session_state.inp_other = f"{int(st.session_state.fixed_expenses['Khác']):,}"
+    st.session_state.inp_other = f"{int(st.session_state.fixed_expenses.get('Khác', 0)):,}"
 if "inp_log_amt" not in st.session_state:
     st.session_state.inp_log_amt = "0"
 if "inp_log_note" not in st.session_state:
@@ -493,6 +517,7 @@ def show_setup_modal():
                 st.session_state.savings_goal = goal_val
                 st.session_state.configured = True
                 st.session_state.modal_step = 1
+                sync_to_local_storage()
                 st.rerun()
 
 if not st.session_state.configured:
@@ -521,6 +546,10 @@ with head_col1:
 with head_col2:
     if st.button("⚙️ Cấu hình lại thông tin", use_container_width=True):
         st.session_state.configured = False
+        try:
+            local_storage.deleteItem("finflow_user_data")
+        except Exception:
+            pass
         st.rerun()
 
 st.write("")
@@ -800,6 +829,7 @@ with tab_stats:
                     st.session_state.daily_logs = st.session_state.daily_logs.drop(
                         st.session_state.daily_logs.index[selected_rows]
                     ).reset_index(drop=True)
+                    sync_to_local_storage()
                     st.success("✅ Đã xóa thành công các khoản chi đã chọn!")
                     st.rerun()
 
@@ -819,6 +849,7 @@ with tab_stats:
                 if st.button("🗑️ Xóa các mục đã chọn trong danh sách", use_container_width=True):
                     indices_to_drop = [options_dict[item] for item in selected_dropdown_items]
                     st.session_state.daily_logs = st.session_state.daily_logs.drop(indices_to_drop).reset_index(drop=True)
+                    sync_to_local_storage()
                     st.success("✅ Đã xóa thành công khoản chi được chọn!")
                     st.rerun()
     else:
@@ -916,6 +947,7 @@ with tab_history:
                 "expenses": h_exps,
                 "savings_goal": existing_data.get("savings_goal", 0.0)
             }
+            sync_to_local_storage()
             st.success(f"✅ Đã lưu thành công dữ liệu cho tháng {hist_month}!")
             st.rerun()
 
