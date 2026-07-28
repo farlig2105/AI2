@@ -171,24 +171,113 @@ def add_expense_callback():
         sync_data()
 
 # ----------------------------------------------------
-# 5. TIÊM CSS TÙY BIẾN (MODERN DARK & GLASSMORPHISM)
+# 5. TIÊM CSS TÙY BIẾN (TỐI ƯU CẢ DARK & LIGHT MODE)
 # ----------------------------------------------------
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
     
+    :root {
+        /* Mặc định: Light Mode */
+        --bg-gradient: radial-gradient(circle at 50% 0%, #EEF2FF 0%, #F8FAFC 50%, #E2E8F0 100%);
+        --text-primary: #0F172A;
+        --text-secondary: #475569;
+        --card-bg: rgba(255, 255, 255, 0.8);
+        --card-hover-bg: rgba(255, 255, 255, 0.98);
+        --card-border: rgba(0, 0, 0, 0.08);
+        --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+        --input-bg: rgba(255, 255, 255, 0.95);
+        --input-border: rgba(0, 0, 0, 0.15);
+        --input-text: #0F172A;
+        --tab-bg: rgba(241, 245, 249, 0.85);
+        --tab-text: #475569;
+        --table-bg: rgba(255, 255, 255, 0.88);
+        --table-border: rgba(0, 0, 0, 0.08);
+        --table-header-bg: linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(139, 92, 246, 0.08) 100%);
+        --table-header-text: #1E293B;
+        --table-row-hover: rgba(99, 102, 241, 0.08);
+        --dialog-bg: rgba(255, 255, 255, 0.96);
+    }
+
+    @media (prefers-color-scheme: dark) {
+        :root {
+            /* Tự động: Dark Mode theo Hệ Thống */
+            --bg-gradient: radial-gradient(circle at 50% 0%, #1E1B4B 0%, #0F172A 50%, #020617 100%);
+            --text-primary: #F8FAFC;
+            --text-secondary: #CBD5E1;
+            --card-bg: rgba(30, 41, 59, 0.45);
+            --card-hover-bg: rgba(30, 41, 59, 0.7);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --card-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5);
+            --input-bg: rgba(15, 23, 42, 0.7);
+            --input-border: rgba(255, 255, 255, 0.18);
+            --input-text: #FFFFFF;
+            --tab-bg: rgba(15, 23, 42, 0.6);
+            --tab-text: #CBD5E1;
+            --table-bg: rgba(15, 23, 42, 0.65);
+            --table-border: rgba(255, 255, 255, 0.12);
+            --table-header-bg: linear-gradient(135deg, rgba(99, 102, 241, 0.35) 0%, rgba(139, 92, 246, 0.25) 100%);
+            --table-header-text: #E2E8F0;
+            --table-row-hover: rgba(99, 102, 241, 0.18);
+            --dialog-bg: rgba(15, 23, 42, 0.95);
+        }
+    }
+
+    /* Đảm bảo tương thích khi người dùng chọn thủ công trong Streamlit Settings */
+    [data-theme="light"], [data-theme="light"] .stApp {
+        --bg-gradient: radial-gradient(circle at 50% 0%, #EEF2FF 0%, #F8FAFC 50%, #E2E8F0 100%);
+        --text-primary: #0F172A;
+        --text-secondary: #475569;
+        --card-bg: rgba(255, 255, 255, 0.8);
+        --card-hover-bg: rgba(255, 255, 255, 0.98);
+        --card-border: rgba(0, 0, 0, 0.08);
+        --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+        --input-bg: rgba(255, 255, 255, 0.95);
+        --input-border: rgba(0, 0, 0, 0.15);
+        --input-text: #0F172A;
+        --tab-bg: rgba(241, 245, 249, 0.85);
+        --tab-text: #475569;
+        --table-bg: rgba(255, 255, 255, 0.88);
+        --table-border: rgba(0, 0, 0, 0.08);
+        --table-header-bg: linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(139, 92, 246, 0.08) 100%);
+        --table-header-text: #1E293B;
+        --table-row-hover: rgba(99, 102, 241, 0.08);
+        --dialog-bg: rgba(255, 255, 255, 0.96);
+    }
+
+    [data-theme="dark"], [data-theme="dark"] .stApp {
+        --bg-gradient: radial-gradient(circle at 50% 0%, #1E1B4B 0%, #0F172A 50%, #020617 100%);
+        --text-primary: #F8FAFC;
+        --text-secondary: #CBD5E1;
+        --card-bg: rgba(30, 41, 59, 0.45);
+        --card-hover-bg: rgba(30, 41, 59, 0.7);
+        --card-border: rgba(255, 255, 255, 0.08);
+        --card-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5);
+        --input-bg: rgba(15, 23, 42, 0.7);
+        --input-border: rgba(255, 255, 255, 0.18);
+        --input-text: #FFFFFF;
+        --tab-bg: rgba(15, 23, 42, 0.6);
+        --tab-text: #CBD5E1;
+        --table-bg: rgba(15, 23, 42, 0.65);
+        --table-border: rgba(255, 255, 255, 0.12);
+        --table-header-bg: linear-gradient(135deg, rgba(99, 102, 241, 0.35) 0%, rgba(139, 92, 246, 0.25) 100%);
+        --table-header-text: #E2E8F0;
+        --table-row-hover: rgba(99, 102, 241, 0.18);
+        --dialog-bg: rgba(15, 23, 42, 0.95);
+    }
+
     .stApp, .stApp p, .stApp div:not([class*="material"]), .stApp button, .stApp input, .stApp select, .stApp label {
         font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
     .stApp {
-        background: radial-gradient(circle at 50% 0%, #1E1B4B 0%, #0F172A 50%, #020617 100%) !important;
-        color: #F8FAFC;
+        background: var(--bg-gradient) !important;
+        color: var(--text-primary) !important;
     }
 
-    /* ĐỊNH DẠNG RIÊNG CHO FORM ĐĂNG NHẬP / ĐĂNG KÝ */
+    /* FORM ĐĂNG NHẬP / ĐĂNG KÝ */
     .auth-title {
-        background: linear-gradient(135deg, #818CF8 0%, #C084FC 50%, #34D399 100%);
+        background: linear-gradient(135deg, #6366F1 0%, #A855F7 50%, #10B981 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         font-weight: 800;
@@ -198,46 +287,46 @@ st.markdown("""
     }
 
     .auth-sub {
-        color: #CBD5E1;
+        color: var(--text-secondary);
         font-size: 1.2rem;
         font-weight: 600;
         margin-bottom: 20px;
     }
 
-    /* Nhãn tên ô nhập liệu (Text Input Label) */
-    div[data-testid="stTextInput"] label {
+    /* Nhãn tên ô nhập liệu */
+    div[data-testid="stTextInput"] label, div[data-testid="stSelectbox"] label, div[data-testid="stDateInput"] label {
         font-size: 1.08rem !important;
         font-weight: 700 !important;
-        color: #F1F5F9 !important;
+        color: var(--text-primary) !important;
         margin-bottom: 8px !important;
     }
 
-    /* Khung nhập liệu (Input Field) */
+    /* Khung nhập liệu */
     div[data-baseweb="input"] input {
         font-size: 1.1rem !important;
         padding: 12px 14px !important;
-        color: #FFFFFF !important;
+        color: var(--input-text) !important;
     }
 
     div[data-baseweb="input"] {
         border-radius: 14px !important;
-        background-color: rgba(15, 23, 42, 0.7) !important;
-        border: 1px solid rgba(255, 255, 255, 0.18) !important;
+        background-color: var(--input-bg) !important;
+        border: 1px solid var(--input-border) !important;
         transition: all 0.25s ease !important;
     }
 
     div[data-baseweb="input"]:focus-within {
-        border-color: #818CF8 !important;
-        box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.3) !important;
+        border-color: #6366F1 !important;
+        box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3) !important;
     }
 
     /* Tab Đăng nhập / Đăng ký */
     div[data-baseweb="tab-list"] {
-        background: rgba(15, 23, 42, 0.6) !important;
+        background: var(--tab-bg) !important;
         backdrop-filter: blur(12px) !important;
         padding: 6px !important;
         border-radius: 16px !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border: 1px solid var(--card-border) !important;
         gap: 8px !important;
         display: flex !important;
         width: 100% !important;
@@ -249,7 +338,7 @@ st.markdown("""
         border-radius: 12px !important;
         border: none !important;
         background: transparent !important;
-        color: #CBD5E1 !important;
+        color: var(--tab-text) !important;
         font-weight: 700 !important;
         font-size: 1.15rem !important;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
@@ -259,8 +348,8 @@ st.markdown("""
     }
 
     button[data-baseweb="tab"]:hover {
-        color: #F8FAFC !important;
-        background: rgba(255, 255, 255, 0.08) !important;
+        color: var(--text-primary) !important;
+        background: rgba(99, 102, 241, 0.1) !important;
     }
 
     button[data-baseweb="tab"][aria-selected="true"] {
@@ -286,32 +375,32 @@ st.markdown("""
     }
     .stButton > button:hover {
         transform: translateY(-2px);
-        box-shadow: 0 10px 22px rgba(99, 102, 241, 0.45) !important;
+        box-shadow: 0 10px 22px rgba(99, 102, 241, 0.35) !important;
     }
 
     div[data-testid="stDataFrame"] {
-        background: rgba(15, 23, 42, 0.65) !important;
-        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        background: var(--table-bg) !important;
+        border: 1px solid var(--table-border) !important;
         border-radius: 18px !important;
         padding: 10px !important;
         backdrop-filter: blur(16px) !important;
-        box-shadow: 0 20px 30px rgba(0, 0, 0, 0.35) !important;
+        box-shadow: var(--card-shadow) !important;
     }
 
     div[data-testid="stDialog"] > div:first-child {
         backdrop-filter: blur(20px) !important;
-        background-color: rgba(2, 6, 23, 0.8) !important;
+        background-color: rgba(0, 0, 0, 0.4) !important;
     }
 
     div[role="dialog"] {
         border-radius: 24px !important;
-        background: rgba(15, 23, 42, 0.95) !important;
-        border: 1px solid rgba(255, 255, 255, 0.12) !important;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8) !important;
+        background: var(--dialog-bg) !important;
+        border: 1px solid var(--card-border) !important;
+        box-shadow: var(--card-shadow) !important;
     }
 
     .dash-header {
-        background: linear-gradient(135deg, #818CF8 0%, #C084FC 50%, #34D399 100%);
+        background: linear-gradient(135deg, #6366F1 0%, #A855F7 50%, #10B981 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         font-weight: 800;
@@ -320,24 +409,25 @@ st.markdown("""
     }
 
     .metric-card {
-        background: rgba(30, 41, 59, 0.4);
+        background: var(--card-bg);
         backdrop-filter: blur(16px);
         -webkit-backdrop-filter: blur(16px);
-        border: 1px solid rgba(255, 255, 255, 0.08);
+        border: 1px solid var(--card-border);
         border-radius: 20px;
         padding: 22px;
         transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
         position: relative;
         overflow: hidden;
+        box-shadow: var(--card-shadow);
     }
     .metric-card:hover {
         transform: translateY(-4px);
-        background: rgba(30, 41, 59, 0.6);
+        background: var(--card-hover-bg);
         border-color: rgba(99, 102, 241, 0.4);
-        box-shadow: 0 20px 30px -10px rgba(99, 102, 241, 0.2);
+        box-shadow: 0 15px 30px -10px rgba(99, 102, 241, 0.25);
     }
     .metric-title {
-        color: #CBD5E1;
+        color: var(--text-secondary);
         font-size: 0.88rem;
         font-weight: 700;
         letter-spacing: 0.8px;
@@ -345,7 +435,7 @@ st.markdown("""
         margin-bottom: 8px;
     }
     .metric-value {
-        color: #FFFFFF;
+        color: var(--text-primary);
         font-size: 2rem;
         font-weight: 800;
         letter-spacing: -0.5px;
@@ -358,27 +448,27 @@ st.markdown("""
         align-items: center;
         gap: 6px;
     }
-    .sub-green { color: #34D399; }
-    .sub-red { color: #F87171; }
+    .sub-green { color: #10B981; }
+    .sub-red { color: #EF4444; }
 
     .custom-table-container {
         border-radius: 18px;
         overflow: hidden;
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        background: rgba(15, 23, 42, 0.65);
+        border: 1px solid var(--table-border);
+        background: var(--table-bg);
         backdrop-filter: blur(16px);
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        box-shadow: var(--card-shadow);
         margin-top: 10px;
     }
     .custom-table {
         width: 100%;
         border-collapse: collapse;
         text-align: left;
-        color: #F8FAFC;
+        color: var(--text-primary);
     }
     .custom-table thead tr {
-        background: linear-gradient(135deg, rgba(99, 102, 241, 0.35) 0%, rgba(139, 92, 246, 0.25) 100%);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+        background: var(--table-header-bg);
+        border-bottom: 1px solid var(--table-border);
     }
     .custom-table th {
         padding: 18px 20px;
@@ -386,19 +476,19 @@ st.markdown("""
         font-weight: 800;
         text-transform: uppercase;
         letter-spacing: 0.8px;
-        color: #E2E8F0;
+        color: var(--table-header-text);
     }
     .custom-table td {
         padding: 18px 20px;
         font-size: 1.05rem;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        border-bottom: 1px solid var(--table-border);
         vertical-align: middle;
     }
     .custom-table tbody tr {
         transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .custom-table tbody tr:hover {
-        background: rgba(99, 102, 241, 0.18);
+        background: var(--table-row-hover);
     }
     
     .badge-pill {
@@ -412,19 +502,19 @@ st.markdown("""
         letter-spacing: 0.2px;
     }
     .badge-red {
-        background: rgba(248, 113, 113, 0.2);
-        color: #F87171;
-        border: 1px solid rgba(248, 113, 113, 0.4);
+        background: rgba(239, 68, 68, 0.15);
+        color: #EF4444;
+        border: 1px solid rgba(239, 68, 68, 0.3);
     }
     .badge-green {
-        background: rgba(52, 211, 153, 0.2);
-        color: #34D399;
-        border: 1px solid rgba(52, 211, 153, 0.4);
+        background: rgba(16, 185, 129, 0.15);
+        color: #10B981;
+        border: 1px solid rgba(16, 185, 129, 0.3);
     }
     .badge-gray {
-        background: rgba(148, 163, 184, 0.18);
-        color: #CBD5E1;
-        border: 1px solid rgba(148, 163, 184, 0.3);
+        background: rgba(100, 116, 139, 0.15);
+        color: var(--text-secondary);
+        border: 1px solid rgba(100, 116, 139, 0.3);
     }
     .cat-title {
         display: flex;
@@ -437,8 +527,8 @@ st.markdown("""
         width: 38px;
         height: 38px;
         border-radius: 10px;
-        background: rgba(99, 102, 241, 0.25);
-        border: 1px solid rgba(99, 102, 241, 0.35);
+        background: rgba(99, 102, 241, 0.15);
+        border: 1px solid rgba(99, 102, 241, 0.3);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -559,7 +649,7 @@ if "chat_history" not in st.session_state:
         {"role": "assistant", "content": "👋 **Xin chào! Tôi là FinBot AI** - Trợ lý tài chính thông minh của bạn.\n\nHãy bấm vào các gợi ý nhanh bên dưới hoặc đặt câu hỏi để tôi phân tích dòng tiền giúp bạn nhé!"}
     ]
 
-# Đảm bảo các ô nhập liệu được đồng bộ chính xác từ bộ nhớ
+# Đồng bộ dữ liệu ô nhập liệu
 st.session_state.inp_income = f"{int(st.session_state.income):,}"
 st.session_state.inp_rent = f"{int(st.session_state.fixed_expenses.get('Tiền nhà', 0)):,}"
 st.session_state.inp_food = f"{int(st.session_state.fixed_expenses.get('Thực phẩm', 0)):,}"
@@ -714,7 +804,7 @@ with m1:
     st.markdown(f"""
     <div class="metric-card">
         <div class="metric-title">TỔNG THU NHẬP</div>
-        <div class="metric-value">{st.session_state.income:,.0f} <span style="font-size:1.1rem; color:#94A3B8;">đ</span></div>
+        <div class="metric-value">{st.session_state.income:,.0f} <span style="font-size:1.1rem; color:var(--text-secondary);">đ</span></div>
         <div class="metric-sub sub-green">⚡ Cố định hàng tháng</div>
     </div>
     """, unsafe_allow_html=True)
@@ -723,7 +813,7 @@ with m2:
     st.markdown(f"""
     <div class="metric-card">
         <div class="metric-title">TỔNG CHI TIÊU</div>
-        <div class="metric-value">{grand_total_exp:,.0f} <span style="font-size:1.1rem; color:#94A3B8;">đ</span></div>
+        <div class="metric-value">{grand_total_exp:,.0f} <span style="font-size:1.1rem; color:var(--text-secondary);">đ</span></div>
         <div class="metric-sub sub-red">📌 Cố định: {fixed_exp_total:,.0f} đ | Phát sinh: {logged_exp_total:,.0f} đ</div>
     </div>
     """, unsafe_allow_html=True)
@@ -732,7 +822,7 @@ with m3:
     st.markdown(f"""
     <div class="metric-card">
         <div class="metric-title">SỐ DƯ CÒN LẠI</div>
-        <div class="metric-value">{remaining_balance:,.0f} <span style="font-size:1.1rem; color:#94A3B8;">đ</span></div>
+        <div class="metric-value">{remaining_balance:,.0f} <span style="font-size:1.1rem; color:var(--text-secondary);">đ</span></div>
         <div class="metric-sub {'sub-green' if remaining_balance >= 0 else 'sub-red'}">
             {'✅ Khả dụng' if remaining_balance >= 0 else '⚠️ Cảnh báo thâm hụt'}
         </div>
@@ -745,7 +835,7 @@ with m4:
     st.markdown(f"""
     <div class="metric-card">
         <div class="metric-title">MỤC TIÊU TIẾT KIỆM</div>
-        <div class="metric-value">{st.session_state.savings_goal:,.0f} <span style="font-size:1.1rem; color:#94A3B8;">đ</span></div>
+        <div class="metric-value">{st.session_state.savings_goal:,.0f} <span style="font-size:1.1rem; color:var(--text-secondary);">đ</span></div>
         <div class="metric-sub {diff_class}">🎯 {diff_text}</div>
     </div>
     """, unsafe_allow_html=True)
@@ -793,11 +883,11 @@ with tab_stats:
             textinfo='percent',
             insidetextfont=dict(size=13, color='#FFFFFF', family="Plus Jakarta Sans"),
             hovertemplate="<b>%{label}</b><br>💵 Số tiền: <b>%{value:,.0f} VNĐ</b><br>📈 Tỷ lệ: <b>%{percent}</b><extra></extra>",
-            marker=dict(line=dict(color='#0F172A', width=3))
+            marker=dict(line=dict(color='rgba(128,128,128,0.2)', width=2))
         )
 
         fig1.add_annotation(
-            text=f"<span style='font-size:12px; color:#CBD5E1; font-weight:700;'>TỔNG CỐ ĐỊNH</span><br><b style='font-size:18px; color:#F8FAFC;'>{fixed_exp_total:,.0f} đ</b>",
+            text=f"<span style='font-size:12px; color:var(--text-secondary); font-weight:700;'>TỔNG CỐ ĐỊNH</span><br><b style='font-size:18px; color:var(--text-primary);'>{fixed_exp_total:,.0f} đ</b>",
             x=0.5, y=0.5,
             showarrow=False,
             align="center"
@@ -806,7 +896,7 @@ with tab_stats:
         fig1.update_layout(
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
-            font=dict(color='#F8FAFC', family="Plus Jakarta Sans", size=13),
+            font=dict(family="Plus Jakarta Sans", size=13),
             showlegend=True,
             legend=dict(
                 orientation="h",
@@ -814,12 +904,12 @@ with tab_stats:
                 y=-0.35,
                 xanchor="center",
                 x=0.5,
-                font=dict(size=13, color='#CBD5E1')
+                font=dict(size=13)
             ),
             margin=dict(t=20, b=60, l=10, r=10),
             height=380
         )
-        st.plotly_chart(fig1, use_container_width=True)
+        st.plotly_chart(fig1, use_container_width=True, theme="streamlit")
 
     with col_chart2:
         st.markdown("##### 📈 Chi tiêu thực tế & Số dư còn lại")
@@ -838,7 +928,7 @@ with tab_stats:
         df_chart2 = pd.DataFrame(chart2_list)
 
         color_map = {
-            "Số dư còn lại": "#34D399",
+            "Số dư còn lại": "#10B981",
             "Chi phát sinh thực tế": "#FB7185",
         }
 
@@ -852,7 +942,7 @@ with tab_stats:
             color_discrete_sequence=['#6366F1', '#8B5CF6', '#F59E0B', '#38BDF8', '#10B981', '#EC4899', '#F97316']
         )
 
-        bal_color = "#34D399" if remaining_balance >= 0 else "#F87171"
+        bal_color = "#10B981" if remaining_balance >= 0 else "#EF4444"
         bal_label = "SỐ DƯ CÒN LẠI" if remaining_balance >= 0 else "THÂM HỤT"
 
         fig2.update_traces(
@@ -860,11 +950,11 @@ with tab_stats:
             textinfo='percent',
             insidetextfont=dict(size=13, color='#FFFFFF', family="Plus Jakarta Sans"),
             hovertemplate="<b>%{label}</b><br>💵 Số tiền: <b>%{value:,.0f} VNĐ</b><br>📈 Tỷ lệ: <b>%{percent}</b><extra></extra>",
-            marker=dict(line=dict(color='#0F172A', width=3))
+            marker=dict(line=dict(color='rgba(128,128,128,0.2)', width=2))
         )
 
         fig2.add_annotation(
-            text=f"<span style='font-size:12px; color:#CBD5E1; font-weight:700;'>{bal_label}</span><br><b style='font-size:18px; color:{bal_color};'>{remaining_balance:,.0f} đ</b>",
+            text=f"<span style='font-size:12px; color:var(--text-secondary); font-weight:700;'>{bal_label}</span><br><b style='font-size:18px; color:{bal_color};'>{remaining_balance:,.0f} đ</b>",
             x=0.5, y=0.5,
             showarrow=False,
             align="center"
@@ -873,7 +963,7 @@ with tab_stats:
         fig2.update_layout(
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
-            font=dict(color='#F8FAFC', family="Plus Jakarta Sans", size=13),
+            font=dict(family="Plus Jakarta Sans", size=13),
             showlegend=True,
             legend=dict(
                 orientation="h",
@@ -881,12 +971,12 @@ with tab_stats:
                 y=-0.35,
                 xanchor="center",
                 x=0.5,
-                font=dict(size=13, color='#CBD5E1')
+                font=dict(size=13)
             ),
             margin=dict(t=20, b=60, l=10, r=10),
             height=380
         )
-        st.plotly_chart(fig2, use_container_width=True)
+        st.plotly_chart(fig2, use_container_width=True, theme="streamlit")
 
     with col_form:
         st.markdown("##### ✍️ Ghi nhận khoản chi thực tế")
@@ -914,7 +1004,7 @@ with tab_stats:
         st.markdown(f"##### 📋 Nhật ký chi tiêu thực tế trong tháng ({log_count} giao dịch)")
     with head_log_b:
         if log_count > 0:
-            st.markdown(f"<div style='text-align: right; color: #34D399; font-weight: 700; font-size: 1.05rem;'>💰 Tổng chi phát sinh: {logged_exp_total:,.0f} VNĐ</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='text-align: right; color: #10B981; font-weight: 700; font-size: 1.05rem;'>💰 Tổng chi phát sinh: {logged_exp_total:,.0f} VNĐ</div>", unsafe_allow_html=True)
 
     if not st.session_state.daily_logs.empty:
         df_display = st.session_state.daily_logs.copy()
@@ -1114,33 +1204,27 @@ with tab_history:
             color="Kỳ", 
             barmode="group",
             color_discrete_map={
-                f"Tháng trước ({comp_month})": "#818CF8",
-                f"Tháng này ({current_month_str})": "#34D399"
+                f"Tháng trước ({comp_month})": "#6366F1",
+                f"Tháng này ({current_month_str})": "#10B981"
             }
         )
         
         fig_bar.update_traces(
             hovertemplate="<b>%{x}</b><br>📅 %{fullData.name}<br>💵 Số tiền: <b>%{y:,.0f} VNĐ</b><extra></extra>",
-            marker=dict(line=dict(color='#0F172A', width=1))
+            marker=dict(line=dict(color='rgba(128,128,128,0.2)', width=1))
         )
         
         fig_bar.update_layout(
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
-            font=dict(color='#F8FAFC', family="Plus Jakarta Sans", size=13),
-            hoverlabel=dict(
-                bgcolor="rgba(15, 23, 42, 0.95)",
-                bordercolor="#818CF8",
-                font_size=14,
-                font_family="Plus Jakarta Sans"
-            ),
-            xaxis=dict(gridcolor='rgba(255,255,255,0.05)', title="", tickfont=dict(size=13, color="#F8FAFC")),
-            yaxis=dict(gridcolor='rgba(255,255,255,0.08)', title="VNĐ", tickfont=dict(size=13, color="#CBD5E1")),
-            legend=dict(orientation="h", yanchor="bottom", y=1.04, xanchor="right", x=1, font=dict(size=13, color="#F8FAFC")),
+            font=dict(family="Plus Jakarta Sans", size=13),
+            xaxis=dict(gridcolor='rgba(128,128,128,0.15)', title="", tickfont=dict(size=13)),
+            yaxis=dict(gridcolor='rgba(128,128,128,0.15)', title="VNĐ", tickfont=dict(size=13)),
+            legend=dict(orientation="h", yanchor="bottom", y=1.04, xanchor="right", x=1, font=dict(size=13)),
             height=390,
             margin=dict(t=30, b=20, l=10, r=10)
         )
-        st.plotly_chart(fig_bar, use_container_width=True)
+        st.plotly_chart(fig_bar, use_container_width=True, theme="streamlit")
 
     st.divider()
     
@@ -1160,22 +1244,22 @@ with tab_history:
     df_trend = pd.DataFrame(history_list)
     
     fig_trend = go.Figure()
-    fig_trend.add_trace(go.Scatter(x=df_trend["Tháng"], y=df_trend["Thu nhập"], mode='lines+markers', name='Thu nhập', line=dict(color='#818CF8', width=4, shape='spline'), marker=dict(size=11)))
-    fig_trend.add_trace(go.Scatter(x=df_trend["Tháng"], y=df_trend["Tổng chi tiêu"], mode='lines+markers', name='Tổng chi tiêu', line=dict(color='#FB7185', width=4, shape='spline'), marker=dict(size=11)))
-    fig_trend.add_trace(go.Scatter(x=df_trend["Tháng"], y=df_trend["Số dư"], mode='lines+markers', name='Số dư tích lũy', line=dict(color='#34D399', width=4, shape='spline'), marker=dict(size=11)))
+    fig_trend.add_trace(go.Scatter(x=df_trend["Tháng"], y=df_trend["Thu nhập"], mode='lines+markers', name='Thu nhập', line=dict(color='#6366F1', width=4, shape='spline'), marker=dict(size=11)))
+    fig_trend.add_trace(go.Scatter(x=df_trend["Tháng"], y=df_trend["Tổng chi tiêu"], mode='lines+markers', name='Tổng chi tiêu', line=dict(color='#F43F5E', width=4, shape='spline'), marker=dict(size=11)))
+    fig_trend.add_trace(go.Scatter(x=df_trend["Tháng"], y=df_trend["Số dư"], mode='lines+markers', name='Số dư tích lũy', line=dict(color='#10B981', width=4, shape='spline'), marker=dict(size=11)))
     
     fig_trend.update_layout(
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
-        font=dict(color='#F8FAFC', family="Plus Jakarta Sans", size=13),
+        font=dict(family="Plus Jakarta Sans", size=13),
         hovermode="x unified",
-        xaxis=dict(gridcolor='rgba(255,255,255,0.08)', type='category'),
-        yaxis=dict(gridcolor='rgba(255,255,255,0.08)', title="VNĐ"),
+        xaxis=dict(gridcolor='rgba(128,128,128,0.15)', type='category'),
+        yaxis=dict(gridcolor='rgba(128,128,128,0.15)', title="VNĐ"),
         legend=dict(orientation="h", yanchor="bottom", y=1.04, xanchor="right", x=1),
         height=400,
         margin=dict(t=30, b=30, l=10, r=10)
     )
-    st.plotly_chart(fig_trend, use_container_width=True)
+    st.plotly_chart(fig_trend, use_container_width=True, theme="streamlit")
 
     st.divider()
 
@@ -1241,11 +1325,11 @@ with tab_history:
 <span>{cat}</span>
 </div>
 </td>
-<td style="text-align: right; font-weight: 600; color: #94A3B8;">{val_prev:,.0f} VNĐ</td>
-<td style="text-align: right; font-weight: 700; color: #F8FAFC;">{val_cur:,.0f} VNĐ</td>
+<td style="text-align: right; font-weight: 600; color: var(--text-secondary);">{val_prev:,.0f} VNĐ</td>
+<td style="text-align: right; font-weight: 700; color: var(--text-primary);">{val_cur:,.0f} VNĐ</td>
 <td style="text-align: right;"><span class="badge-pill {badge_class}">{diff_str}</span></td>
 <td style="text-align: center;"><span class="badge-pill {badge_class}">{pct_str}</span></td>
-<td style="text-align: center; font-weight: 600; font-size: 0.95rem; color: #CBD5E1;">{status_str}</td>
+<td style="text-align: center; font-weight: 600; font-size: 0.95rem; color: var(--text-secondary);">{status_str}</td>
 </tr>"""
 
         html_table += """</tbody>
