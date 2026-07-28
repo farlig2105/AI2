@@ -69,7 +69,7 @@ def add_expense_callback():
         st.session_state.inp_log_amt = "0"
         st.session_state.inp_log_note = ""
 
-# 2. Tiêm CSS Tùy Biến (Glow Hover & Styling Modern Dark)
+# 2. Tiêm CSS Tùy Biến (Styling Modern Dark & Custom Table UI 100x)
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
@@ -83,6 +83,7 @@ st.markdown("""
         color: #F8FAFC;
     }
 
+    /* Plotly Glow & Hover */
     .js-plotly-plot .plotly .slice path, .js-plotly-plot .plotly .bars path {
         transition: filter 0.3s ease, opacity 0.3s ease !important;
     }
@@ -92,6 +93,7 @@ st.markdown("""
         cursor: pointer !important;
     }
 
+    /* Modal Dialog */
     div[data-testid="stDialog"] > div:first-child {
         backdrop-filter: blur(20px) !important;
         background-color: rgba(2, 6, 23, 0.8) !important;
@@ -104,6 +106,7 @@ st.markdown("""
         box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8) !important;
     }
 
+    /* Headers & Cards */
     .dash-header {
         background: linear-gradient(135deg, #818CF8 0%, #C084FC 50%, #34D399 100%);
         -webkit-background-clip: text;
@@ -155,6 +158,7 @@ st.markdown("""
     .sub-green { color: #34D399; }
     .sub-red { color: #F87171; }
 
+    /* Custom Navigation Tabs */
     div[data-testid="stTabs"] {
         margin-top: 10px;
     }
@@ -200,14 +204,7 @@ st.markdown("""
         display: none !important;
     }
 
-    div[data-testid="stTabContent"] {
-        animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(8px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
+    /* Buttons & Inputs */
     .stButton > button {
         border-radius: 12px !important;
         background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%) !important;
@@ -227,26 +224,94 @@ st.markdown("""
         background-color: rgba(15, 23, 42, 0.6) !important;
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
     }
-    div[data-baseweb="input"]:focus-within {
-        border-color: #6366F1 !important;
-    }
 
-    div[data-testid="stChatMessage"] {
-        background: rgba(30, 41, 59, 0.4) !important;
-        border: 1px solid rgba(255, 255, 255, 0.08) !important;
-        border-radius: 18px !important;
-        padding: 14px 18px !important;
-        margin-bottom: 12px !important;
-        backdrop-filter: blur(10px) !important;
+    /* ====================================================
+       100X BETTER CUSTOM TABLE STYLING
+       ==================================================== */
+    .custom-table-container {
+        border-radius: 18px;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(15, 23, 42, 0.55);
+        backdrop-filter: blur(16px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        margin-top: 10px;
     }
-
-    div[data-testid="stChatMessageAvatar"] {
-        background: linear-gradient(135deg, rgba(99, 102, 241, 0.25) 0%, rgba(79, 70, 229, 0.25) 100%) !important;
-        border: 1px solid rgba(99, 102, 241, 0.4) !important;
-        border-radius: 12px !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
+    .custom-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+        color: #F8FAFC;
+    }
+    .custom-table thead tr {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.25) 0%, rgba(139, 92, 246, 0.15) 100%);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    .custom-table th {
+        padding: 16px 20px;
+        font-size: 0.82rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: #CBD5E1;
+    }
+    .custom-table td {
+        padding: 16px 20px;
+        font-size: 0.93rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        vertical-align: middle;
+    }
+    .custom-table tbody tr {
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .custom-table tbody tr:hover {
+        background: rgba(99, 102, 241, 0.15);
+        transform: scale(1.002);
+    }
+    
+    /* Table Badges */
+    .badge-pill {
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 0.82rem;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        letter-spacing: 0.2px;
+    }
+    .badge-red {
+        background: rgba(248, 113, 113, 0.18);
+        color: #F87171;
+        border: 1px solid rgba(248, 113, 113, 0.35);
+    }
+    .badge-green {
+        background: rgba(52, 211, 153, 0.18);
+        color: #34D399;
+        border: 1px solid rgba(52, 211, 153, 0.35);
+    }
+    .badge-gray {
+        background: rgba(148, 163, 184, 0.15);
+        color: #94A3B8;
+        border: 1px solid rgba(148, 163, 184, 0.25);
+    }
+    .cat-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 700;
+        font-size: 0.95rem;
+    }
+    .cat-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        background: rgba(99, 102, 241, 0.2);
+        border: 1px solid rgba(99, 102, 241, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -808,7 +873,7 @@ with tab_history:
         )
         
         fig_bar.update_traces(
-            hovertemplate="<b>%{x}</b><br>💵 Số tiền: <b>%{y:,.0f} VNĐ</b><extra></extra>",
+            hovertemplate="<b>%{x}</b><br>📅 %{fullData.name}<br>💵 Số tiền: <b>%{y:,.0f} VNĐ</b><extra></extra>",
             marker=dict(line=dict(color='#0F172A', width=1))
         )
         
@@ -816,6 +881,12 @@ with tab_history:
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
             font=dict(color='#F8FAFC', family="Plus Jakarta Sans", size=12),
+            hoverlabel=dict(
+                bgcolor="rgba(15, 23, 42, 0.95)",
+                bordercolor="#818CF8",
+                font_size=13,
+                font_family="Plus Jakarta Sans"
+            ),
             xaxis=dict(gridcolor='rgba(255,255,255,0.05)', title=""),
             yaxis=dict(gridcolor='rgba(255,255,255,0.08)', title="VNĐ"),
             legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
@@ -826,8 +897,9 @@ with tab_history:
 
     st.divider()
     
-    # --- BIỂU ĐỒ XU HƯỚNG TỔNG TÀI CHÍNH QUA CÁC THÁNG ---
+    # --- BIỂU ĐỒ XU HƯỚNG TỔNG TÀI CHÍNH VỚI DỰ BẢO HOVER UNIFIED ---
     st.markdown("##### 📈 Biến động Thu nhập - Chi tiêu - Số dư qua thời gian")
+    st.caption("💡 *Di chuột lên bất kỳ mốc thời gian nào để xem bảng tổng hợp thông tin chi tiết tại điểm đó.*")
     
     history_list = []
     for m in sorted(st.session_state.monthly_history.keys()):
@@ -835,7 +907,6 @@ with tab_history:
         m_exp = sum(st.session_state.monthly_history[m]["expenses"].values())
         m_bal = m_inc - m_exp
         
-        # Định dạng lại nhãn tháng hiển thị (Ví dụ: Tháng 06/2026)
         parts = m.split("-")
         m_label = f"Tháng {parts[1]}/{parts[0]}" if len(parts) == 2 else m
         
@@ -844,28 +915,78 @@ with tab_history:
     df_trend = pd.DataFrame(history_list)
     
     fig_trend = go.Figure()
-    fig_trend.add_trace(go.Scatter(x=df_trend["Tháng"], y=df_trend["Thu nhập"], mode='lines+markers', name='Thu nhập', line=dict(color='#818CF8', width=3)))
-    fig_trend.add_trace(go.Scatter(x=df_trend["Tháng"], y=df_trend["Tổng chi tiêu"], mode='lines+markers', name='Tổng chi tiêu', line=dict(color='#FB7185', width=3)))
-    fig_trend.add_trace(go.Scatter(x=df_trend["Tháng"], y=df_trend["Số dư"], mode='lines+markers', name='Số dư tích lũy', line=dict(color='#34D399', width=3)))
+    
+    # Đường Thu Nhập
+    fig_trend.add_trace(go.Scatter(
+        x=df_trend["Tháng"], 
+        y=df_trend["Thu nhập"], 
+        mode='lines+markers', 
+        name='Thu nhập',
+        line=dict(color='#818CF8', width=3.5, shape='spline'),
+        marker=dict(size=10, symbol='circle', line=dict(color='#FFFFFF', width=2)),
+        hovertemplate="💵 Thu nhập: <b>%{y:,.0f} VNĐ</b><extra></extra>"
+    ))
+
+    # Đường Tổng Chi Tiêu
+    fig_trend.add_trace(go.Scatter(
+        x=df_trend["Tháng"], 
+        y=df_trend["Tổng chi tiêu"], 
+        mode='lines+markers', 
+        name='Tổng chi tiêu',
+        line=dict(color='#FB7185', width=3.5, shape='spline'),
+        marker=dict(size=10, symbol='circle', line=dict(color='#FFFFFF', width=2)),
+        hovertemplate="💸 Tổng chi: <b>%{y:,.0f} VNĐ</b><extra></extra>"
+    ))
+
+    # Đường Số Dư
+    fig_trend.add_trace(go.Scatter(
+        x=df_trend["Tháng"], 
+        y=df_trend["Số dư"], 
+        mode='lines+markers', 
+        name='Số dư tích lũy',
+        line=dict(color='#34D399', width=3.5, shape='spline'),
+        marker=dict(size=10, symbol='circle', line=dict(color='#FFFFFF', width=2)),
+        hovertemplate="💎 Số dư: <b>%{y:,.0f} VNĐ</b><extra></extra>"
+    ))
     
     fig_trend.update_layout(
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
         font=dict(color='#F8FAFC', family="Plus Jakarta Sans", size=12),
+        hovermode="x unified",  # Tạo Bảng Thông Tin Tự Động khi Hover bất kỳ điểm nào trên trục X
+        hoverlabel=dict(
+            bgcolor="rgba(15, 23, 42, 0.95)",
+            bordercolor="rgba(99, 102, 241, 0.6)",
+            font_size=13,
+            font_family="Plus Jakarta Sans",
+            font_color="#F8FAFC"
+        ),
         xaxis=dict(
             gridcolor='rgba(255,255,255,0.05)', 
-            type='category'  # Khóa kiểu dữ liệu trục X dạng danh mục tháng thay vì chuỗi ngày liên tục
+            type='category',
+            showspikes=True,      # Hiển thị đường dóng dọc khi hover
+            spikecolor="rgba(129, 140, 248, 0.6)",
+            spikethickness=1.5,
+            spikedash="dot",
+            spikemode="across"
         ),
-        yaxis=dict(gridcolor='rgba(255,255,255,0.08)', title="VNĐ"),
+        yaxis=dict(
+            gridcolor='rgba(255,255,255,0.08)', 
+            title="VNĐ",
+            showspikes=True,      # Hiển thị đường dóng ngang khi hover
+            spikecolor="rgba(129, 140, 248, 0.6)",
+            spikethickness=1.5,
+            spikedash="dot"
+        ),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-        height=350,
+        height=380,
         margin=dict(t=20, b=20, l=10, r=10)
     )
     st.plotly_chart(fig_trend, use_container_width=True)
 
     st.divider()
 
-    # --- BẢNG BÁO CÁO CHI TIẾT TĂNG/GIẢM CHI TIÊU ---
+    # --- BẢNG BÁO CÁO TÙY CHỈNH NÂNG CẤP (UI 100X) ---
     col_tbl_title, col_tbl_select = st.columns([2, 1])
     with col_tbl_title:
         st.markdown(f"##### 📊 Bảng so sánh chi tiêu chi tiết ({current_month_str} vs {st.session_state.comp_month_selected})")
@@ -884,21 +1005,78 @@ with tab_history:
         cur_data = st.session_state.monthly_history[current_month_str]
         prev_data = st.session_state.monthly_history.get(tbl_comp_month, cur_data)
         
-        comp_table = []
+        cat_icons = {
+            "Tiền nhà": "🏠",
+            "Thực phẩm": "🍲",
+            "Điện nước & Mạng": "⚡",
+            "Giải trí": "🎮",
+            "Đi lại": "🚗",
+            "Khác": "📦"
+        }
+
+        # Xây dựng Bảng HTML UI cao cấp
+        html_table = f"""
+        <div class="custom-table-container">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Danh mục chi tiêu</th>
+                        <th style="text-align: right;">Tháng trước ({tbl_comp_month})</th>
+                        <th style="text-align: right;">Tháng này ({current_month_str})</th>
+                        <th style="text-align: right;">Chênh lệch (VNĐ)</th>
+                        <th style="text-align: center;">Phần trăm</th>
+                        <th style="text-align: center;">Đánh giá</th>
+                    </tr>
+                </thead>
+                <tbody>
+        """
+
         for cat in st.session_state.fixed_expenses.keys():
             val_cur = cur_data["expenses"].get(cat, 0.0)
             val_prev = prev_data["expenses"].get(cat, 0.0)
             diff = val_cur - val_prev
-            pct = ((diff / val_prev) * 100) if val_prev > 0 else 0.0
-            
-            comp_table.append({
-                "Danh mục": cat,
-                f"Tháng trước ({tbl_comp_month})": f"{val_prev:,.0f} VNĐ",
-                f"Tháng này ({current_month_str})": f"{val_cur:,.0f} VNĐ",
-                "Chênh lệch (VNĐ)": f"{'+' if diff > 0 else ''}{diff:,.0f} VNĐ",
-                "Phần trăm": f"{'+' if pct > 0 else ''}{pct:.1f}%"
-            })
-        st.dataframe(pd.DataFrame(comp_table), use_container_width=True)
+            pct = ((diff / val_prev) * 100) if val_prev > 0 else (100.0 if diff > 0 else 0.0)
+            icon = cat_icons.get(cat, "📌")
+
+            if diff > 0:
+                diff_str = f"+{diff:,.0f} đ"
+                pct_str = f"+{pct:.1f}%"
+                badge_class = "badge-red"
+                status_str = "⚠️ Tăng chi tiêu"
+            elif diff < 0:
+                diff_str = f"{diff:,.0f} đ"
+                pct_str = f"{pct:.1f}%"
+                badge_class = "badge-green"
+                status_str = "✅ Tiết kiệm"
+            else:
+                diff_str = "0 đ"
+                pct_str = "0.0%"
+                badge_class = "badge-gray"
+                status_str = "⚪ Ổn định"
+
+            html_table += f"""
+                <tr>
+                    <td>
+                        <div class="cat-title">
+                            <div class="cat-icon">{icon}</div>
+                            <span>{cat}</span>
+                        </div>
+                    </td>
+                    <td style="text-align: right; font-weight: 600; color: #94A3B8;">{val_prev:,.0f} VNĐ</td>
+                    <td style="text-align: right; font-weight: 700; color: #F8FAFC;">{val_cur:,.0f} VNĐ</td>
+                    <td style="text-align: right;"><span class="badge-pill {badge_class}">{diff_str}</span></td>
+                    <td style="text-align: center;"><span class="badge-pill {badge_class}">{pct_str}</span></td>
+                    <td style="text-align: center; font-weight: 600; font-size: 0.85rem; color: #CBD5E1;">{status_str}</td>
+                </tr>
+            """
+
+        html_table += """
+                </tbody>
+            </table>
+        </div>
+        """
+
+        st.markdown(html_table, unsafe_allow_html=True)
 
 
 # ================= TAB 3: AI ASSISTANT (FINBOT) =================
