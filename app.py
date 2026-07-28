@@ -167,7 +167,7 @@ def add_expense_action(log_date, log_cat, amt, log_note):
     sync_data()
 
 def confirm_emergency_action():
-    """Callback xác nhận chi khi chạm quỹ khẩn cấp."""
+    """Callback xác nhận chi: Thêm vào bảng và reset dữ liệu vừa nhập."""
     pending = st.session_state.get("pending_expense", {})
     if pending:
         add_expense_action(
@@ -181,9 +181,11 @@ def confirm_emergency_action():
         st.session_state.expense_added_msg = True
 
 def cancel_emergency_action():
-    """Callback hủy bỏ giao dịch khẩn cấp."""
+    """Callback hủy bỏ: Đóng hộp thoại và xóa toàn bộ thông tin đã nhập."""
     st.session_state.show_confirm_dialog = False
     st.session_state.pending_expense = None
+    st.session_state.inp_log_amt = "0"
+    st.session_state.inp_log_note = ""
 
 def handle_add_expense_click():
     """Callback kiểm tra và xử lý khi bấm nút Thêm khoản chi."""
